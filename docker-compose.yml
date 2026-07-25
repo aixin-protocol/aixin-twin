@@ -1,0 +1,36 @@
+# One-liner self-host for the AiXin Twin reference stack.
+# Runs: app + reference validator server + Postgres.
+services:
+  app:
+    build: .
+    image: ghcr.io/aixin-protocol/aixin-twin:latest
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      AIXIN_VALIDATOR_URL: http://validator:3001
+    depends_on:
+      - validator
+
+  validator:
+    image: ghcr.io/aixin-protocol/validator-server:1.1.0
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      AIXIN_ANCHOR_RPC_URL: ${AIXIN_ANCHOR_RPC_URL:-}
+      AIXIN_ANCHOR_CONTRACT: ${AIXIN_ANCHOR_CONTRACT:-}
+      AIXIN_ANCHOR_PRIVATE_KEY: ${AIXIN_ANCHOR_PRIVATE_KEY:-}
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: aixin
+      POSTGRES_DB: aixin
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
