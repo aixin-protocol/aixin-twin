@@ -25,6 +25,7 @@ Files shipped in the repo:
 
 ```bash
 git clone <your-mirror>/aixin-twin.git && cd aixin-twin
+chmod +x scripts/aixin-up.sh
 ./scripts/aixin-up.sh          # first run copies docker/.env — edit secrets
 ./scripts/aixin-up.sh          # second run builds, starts, pulls model, migrates
 ```
