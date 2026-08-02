@@ -1,9 +1,12 @@
 node_modules
+.git
 .output
-.tanstack
+.nitro
+.vinxi
 dist
 .env
-.env.local
-.git
-.github
-coverage
+.env.*
+!.env.example
+*.log
+/mnt
+.lovable
