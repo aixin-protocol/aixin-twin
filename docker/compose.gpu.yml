@@ -1,0 +1,25 @@
+# GPU override for the local LLM (NVIDIA only).
+# Requires the NVIDIA driver + NVIDIA Container Toolkit on the host.
+#
+# Usage:
+#   docker compose -f docker/compose.yml -f docker/compose.gpu.yml \
+#     --env-file docker/.env --profile llm up -d --build
+#
+# Or via the bring-up script:
+#   AIXIN_GPU=1 ./scripts/aixin-up.sh
+
+name: aixin
+
+services:
+  ollama:
+    environment:
+      # Spread across all visible GPUs; set to "0" to pin to the first card.
+      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-all}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-30m}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${OLLAMA_GPU_COUNT:-all}
+              capabilities: [gpu]

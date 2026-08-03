@@ -4,7 +4,14 @@ A complete runbook for running the entire AiXin stack — web app, database + au
 
 Everything here is chosen so that **no component depends on a service that is blocked or unreliable from inside mainland China**.
 
-If you just want it running, start with **§0 One-click Docker setup**. The rest of the guide explains the pieces, the manual routes, and the Alibaba Cloud specifics.
+**Looking for the exact, ordered, step-by-step install?** Use
+[`DEPLOY_RUNBOOK.md`](./DEPLOY_RUNBOOK.md) — a beginner-friendly runbook with every command for
+Ubuntu 24.04 (Alibaba Cloud ECS, NVIDIA GPU) and Windows 11, with checkpoints after each step.
+This file is the reference: architecture, blocked-service swaps, manual (non-Docker) routes, and
+the full environment-variable table.
+
+If you just want it running, start with **§0 One-click Docker setup**.
+
 
 ---
 

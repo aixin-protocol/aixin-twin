@@ -1,5 +1,7 @@
 # AiXin one-click Docker setup (Windows 11 / PowerShell 7+)
-# Usage:  pwsh -File .\scripts\aixin-up.ps1
+# Usage:
+#   pwsh -File .\scripts\aixin-up.ps1
+#   $env:AIXIN_GPU=1; pwsh -File .\scripts\aixin-up.ps1     # NVIDIA GPU host
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 
@@ -10,24 +12,36 @@ if (-not (Test-Path $envFile)) {
   exit 0
 }
 
+# Read docker/.env into a hashtable so we can reuse values below.
+$cfg = @{}
+Get-Content $envFile | Where-Object { $_ -match '^\s*[^#\s][^=]*=' } | ForEach-Object {
+  $parts = $_.Split('=', 2); $cfg[$parts[0].Trim()] = $parts[1].Trim()
+}
+$dbName = if ($cfg['POSTGRES_DB']) { $cfg['POSTGRES_DB'] } else { "aixin" }
+$model  = if ($cfg['AIXIN_LLM_MODEL']) { $cfg['AIXIN_LLM_MODEL'] } else { "qwen2.5:7b-instruct" }
+
+$files = @("-f", "docker/compose.yml")
+if ($env:AIXIN_GPU -eq "1") {
+  $files += @("-f", "docker/compose.gpu.yml")
+  Write-Host "==> GPU override enabled (docker/compose.gpu.yml)"
+}
 $profiles = if ($env:AIXIN_PROFILES) { $env:AIXIN_PROFILES -split ' ' } else { @("--profile", "llm") }
 
+function dc { docker compose @files --env-file $envFile @args }
+
 Write-Host "==> Building and starting AiXin stack"
-docker compose -f docker/compose.yml --env-file $envFile @profiles up -d --build
+dc @profiles up -d --build
 
 if ($profiles -contains "llm") {
-  $model = (Select-String -Path $envFile -Pattern '^AIXIN_LLM_MODEL=' | Select-Object -First 1)
-  $model = if ($model) { $model.Line.Split('=', 2)[1] } else { "qwen2.5:7b-instruct" }
   Write-Host "==> Pulling local model $model (first run only)"
-  docker compose -f docker/compose.yml --env-file $envFile exec -T ollama ollama pull $model
+  dc exec -T ollama ollama pull $model
 }
 
 Write-Host "==> Applying database migrations"
 Get-ChildItem "supabase/migrations/*.sql" | Sort-Object Name | ForEach-Object {
-  Get-Content $_.FullName -Raw | docker compose -f docker/compose.yml --env-file $envFile `
-    exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d aixin | Out-Null
+  Get-Content $_.FullName -Raw | dc exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d $dbName | Out-Null
 }
 
 Write-Host "==> Status"
-docker compose -f docker/compose.yml --env-file $envFile ps
+dc @profiles ps
 Write-Host "AiXin is up. Open http://localhost (or your SITE_ADDRESS)."
