@@ -10,10 +10,265 @@ Ubuntu 24.04 (Alibaba Cloud ECS, NVIDIA GPU) and Windows 11, with checkpoints af
 This file is the reference: architecture, blocked-service swaps, manual (non-Docker) routes, and
 the full environment-variable table.
 
-If you just want it running, start with **§0 One-click Docker setup**.
+If you have never used a terminal, Git, or Docker before, **start with §0.0 below** — it installs
+and explains every tool from zero. If your tools are already installed, skip to
+**§0 One-click Docker setup**.
 
 
 ---
+
+## 0.0 Absolute beginner setup — install and understand your tools
+
+This section assumes **nothing**. Work through it top to bottom once per machine. Everything after
+it assumes these tools exist.
+
+### 0.0.1 Words you will see, in plain English
+
+| Term | What it actually means |
+| --- | --- |
+| Terminal / shell | A window where you type commands instead of clicking. On Ubuntu it is the black window; on Windows it is PowerShell. |
+| `$` at the start of a line | "Type this in a Linux/Ubuntu terminal." Do **not** type the `$`. |
+| `PS>` at the start of a line | "Type this in Windows PowerShell." Do **not** type the `PS>`. |
+| `sudo` | "Run this command as administrator." It will ask for your password; typing shows nothing — that is normal. |
+| SSH | A way to get a terminal on a remote server (your Alibaba Cloud machine) from your own computer. |
+| Repository (repo) | A folder of source code tracked by Git. AiXin has two: `aixin-twin` (the app) and `aixin-protocol` (the spec/docs). |
+| Clone | Download a copy of a repo, with its history, onto this machine. |
+| Build | Turn the human-readable source code into the optimised files a server actually runs. |
+| Container / Docker image | A pre-packed box holding a program plus everything it needs, so it runs the same on every machine. |
+| Compose | A file listing several containers (app, database, proxy, LLM) so one command starts them all. |
+| Environment variable | A named setting read at start-up, e.g. a password or a URL. Ours live in `docker/.env`. |
+| Migration | A `.sql` file that creates or changes database tables. |
+
+Two habits that save hours:
+
+1. **Copy commands one block at a time** and read the output before continuing.
+2. If a command prints an error, stop. Do not run the next one. Search the exact error text in the
+   troubleshooting table in §10 or in `DEPLOY_RUNBOOK.md`.
+
+### 0.0.2 Get a terminal on the machine you are installing on
+
+**Ubuntu server (Alibaba Cloud ECS) — from Windows:**
+
+```powershell
+# In PowerShell on your laptop. Replace with your server's public IP.
+ssh root@<ecs-public-ip>
+# type "yes" the first time, then your server password
+```
+
+**Ubuntu server — from macOS/Linux:** same `ssh root@<ecs-public-ip>` in Terminal.
+
+**Ubuntu desktop:** press `Ctrl` + `Alt` + `T`.
+
+**Windows 11:** press the Start key, type `PowerShell`, right-click **Windows PowerShell** →
+**Run as administrator**.
+
+Check you are where you think you are:
+
+```bash
+whoami      # who you are logged in as
+hostname    # which machine you are on
+pwd         # which folder you are in
+```
+
+### 0.0.3 Install Git — Ubuntu
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git
+git --version                      # expect: git version 2.4x.x
+```
+
+### 0.0.4 Install Git — Windows 11
+
+Option A (recommended, one command in an **administrator** PowerShell):
+
+```powershell
+winget install --id Git.Git -e --source winget
+```
+
+Option B (manual): open `https://git-scm.com/download/win`, download the 64-bit installer, run it,
+and click **Next** through every screen — the defaults are correct.
+
+Then **close and reopen PowerShell** (installers only change the PATH for new windows) and verify:
+
+```powershell
+git --version
+```
+
+### 0.0.5 Configure Git once, on every machine
+
+```bash
+git config --global user.name  "Your Name"
+git config --global user.email "you@example.com"
+git config --global init.defaultBranch main
+git config --global pull.rebase false
+# Windows only — keeps our shell scripts working:
+git config --global core.autocrlf input
+```
+
+`user.name` / `user.email` only label the commits you make; any values work.
+
+### 0.0.6 The only 8 Git commands you need
+
+| Goal | Command |
+| --- | --- |
+| Download the code the first time | `git clone https://github.com/aixin-protocol/aixin-twin.git aixin` |
+| Enter the folder | `cd aixin` |
+| Get the latest code from GitHub | `git pull --ff-only` |
+| See which files you changed | `git status` |
+| See the last 5 commits | `git log --oneline -5` |
+| Stage your changes | `git add -A` |
+| Save them locally with a message | `git commit -m "what I changed"` |
+| Upload them to GitHub | `git push` |
+
+Rules of thumb for this project: **the servers only ever `git pull`.** You edit code in your
+development environment, push from there, and on the Ubuntu/Windows boxes you only ever pull and
+redeploy. That way a server never has local changes that block a pull.
+
+If `git pull` ever refuses because of local edits you do not care about:
+
+```bash
+git status                  # look at what would be lost
+git checkout -- .           # discard local edits to tracked files
+git pull --ff-only
+```
+
+If GitHub is slow or blocked from mainland China, mirror the repo to `gitee.com` once through
+Gitee's "import repository" feature and clone that URL instead — every other command is identical.
+
+### 0.0.7 Install Docker — Ubuntu
+
+Docker runs the app, database, proxy, and local LLM as containers, so you do not install Node,
+Postgres, or Nginx by hand.
+
+```bash
+# 1. tools Docker's repo needs
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg lsb-release
+
+# 2. add Docker's signing key (Alibaba mirror — fast inside China)
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# 3. add the repository
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 4. install engine + compose plugin
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
+  docker-buildx-plugin docker-compose-plugin
+
+# 5. start it now and on every boot
+sudo systemctl enable --now docker
+```
+
+Verify — both lines must succeed:
+
+```bash
+sudo docker run --rm hello-world     # prints "Hello from Docker!"
+docker compose version               # prints v2.x
+```
+
+Optional, so you can drop `sudo`:
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker          # or log out and back in
+docker run --rm hello-world
+```
+
+If the image download hangs, Docker Hub is being blocked — add China registry mirrors
+(§6.2) and run `sudo systemctl restart docker`, then retry.
+
+### 0.0.8 Install Docker — Windows 11
+
+1. Enable WSL2 (Docker Desktop's engine) in an **administrator** PowerShell:
+
+   ```powershell
+   wsl --install -d Ubuntu-24.04
+   ```
+   Reboot when asked, then set a Linux username/password at first launch.
+2. Install Docker Desktop:
+
+   ```powershell
+   winget install --id Docker.DockerDesktop -e
+   ```
+3. Launch **Docker Desktop** and wait for the whale icon to say *Engine running*.
+4. Settings → **Resources → WSL Integration** → enable `Ubuntu-24.04`.
+5. Settings → **Docker Engine** → paste the `registry-mirrors` block from §6.2 → **Apply & restart**.
+
+Verify inside the WSL shell (`wsl -d Ubuntu-24.04`):
+
+```bash
+docker run --rm hello-world
+docker compose version
+```
+
+Docker Desktop must be **running** before any AiXin script; it does not auto-start unless you tick
+that box in Settings → General.
+
+### 0.0.9 Do you need anything else installed?
+
+No. Node 22, Bun, Postgres, Caddy, and Ollama all run **inside** containers built by our
+`Dockerfile`. You only install extras if you deliberately choose the manual, non-Docker route in
+§6.6 / §7.2.
+
+Two small helpers are still worth having on Ubuntu for the verification steps:
+
+```bash
+sudo apt-get install -y jq postgresql-client   # pretty-print JSON, run psql from the host
+```
+
+### 0.0.10 What "build" means here, and how to do it
+
+"Building" AiXin means: install dependencies with Bun → run `vite build` to produce a Node server
+bundle → copy that bundle into a small Node 22 image. All three steps live in `Dockerfile`, so you
+never run them by hand. One command does everything:
+
+```bash
+cd /opt/aixin                 # wherever you cloned it
+chmod +x scripts/aixin-up.sh  # once: mark the script executable
+AIXIN_GPU=1 AIXIN_PROFILES="--profile llm --profile supabase" ./scripts/aixin-up.sh
+```
+
+Drop `AIXIN_GPU=1` on machines without an NVIDIA GPU. The script is safe to re-run: it rebuilds,
+restarts, pulls the local model on first run, and applies every migration in
+`supabase/migrations/`. A first build takes 15–40 minutes (it downloads base images); later builds
+take 3–6 minutes.
+
+The **first** run stops early to create `docker/.env` and asks you to fill in secrets — that is
+expected. Fill it in (§5 lists every variable, `DEPLOY_RUNBOOK.md` §A5–A6 walks through it) and run
+the same command again.
+
+### 0.0.11 The everyday loop, once installed
+
+```bash
+cd /opt/aixin
+git pull --ff-only                                     # 1. get the new code
+AIXIN_GPU=1 AIXIN_PROFILES="--profile llm --profile supabase" ./scripts/aixin-up.sh   # 2. rebuild
+curl -sf -o /dev/null -w '%{http_code}\n' http://localhost/    # 3. expect 200
+docker compose -f docker/compose.yml --env-file docker/.env ps  # 4. all services "running"
+```
+
+Useful when something looks wrong:
+
+```bash
+# live application logs (Ctrl+C to stop watching)
+docker compose -f docker/compose.yml --env-file docker/.env logs -f app
+# restart just the app after changing a server-side secret
+docker compose -f docker/compose.yml --env-file docker/.env restart app
+# stop everything (data is kept in the db-data volume)
+docker compose -f docker/compose.yml --env-file docker/.env down
+```
+
+**Checkpoint for §0.0:** `git --version`, `docker run --rm hello-world`, and
+`docker compose version` all succeed on this machine. Only then continue.
+
+---
+
 
 ## 0. One-click Docker setup
 
@@ -198,50 +453,36 @@ After `bun run build`, the Node entry point is emitted at `.output/server/index.
 
 > Note: `src/lib/anchor.server.ts` and `src/lib/erc8004.server.ts` use `viem`, which is pure JS and works fine on Node.
 
-### 4.2 Point the LLM at Ollama or a domestic provider
+### 4.2 Point the LLM at Ollama or a domestic provider — no code change needed
 
-`src/lib/ai-gateway.server.ts` builds the provider with a hardcoded Lovable base URL and header. Make both configurable:
+This is now **env-driven**. `src/lib/ai-gateway.server.ts` exposes `resolveChatModel(role)`, and every AI call site
+(`src/routes/api/chat.ts`, `src/lib/task-thread.server.ts`, `src/lib/execution.server.ts`, `src/lib/skillcraft.functions.ts`)
+goes through it:
 
-```ts
-export function createLovableAiGatewayProvider(apiKey: string, initialRunId?: string) {
-  const runIdFetch = createLovableAiGatewayRunIdFetch(initialRunId);
-  const baseURL = process.env.AI_BASE_URL ?? "https://ai.gateway.lovable.dev/v1";
-  const isLovable = baseURL.includes("gateway.lovable.dev");
-  const provider = createOpenAICompatible({
-    name: "aixin-llm",
-    baseURL,
-    supportsStructuredOutputs: false,
-    headers: isLovable
-      ? { "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" }
-      : { Authorization: `Bearer ${apiKey}` },
-    fetch: runIdFetch.fetch,
-  });
-  return Object.assign(provider, {
-    getRunId: runIdFetch.getRunId,
-    waitForRunId: runIdFetch.waitForRunId,
-  });
-}
-```
-
-Then replace the hardcoded model id in `src/routes/api/chat.ts` (currently `gateway("openai/gpt-5.5")`) with:
-
-```ts
-const model = gateway(process.env.AI_MODEL ?? "openai/gpt-5.5");
-```
-
-Do the same anywhere else a model id is passed to the gateway (search for `gateway(` across `src/lib/*.server.ts`).
+- If **`AIXIN_LLM_BASE_URL`** is set, the app builds an OpenAI-compatible provider against that endpoint,
+  authenticates with `AIXIN_LLM_API_KEY`, and uses `AIXIN_LLM_MODEL` (default `qwen2.5:7b-instruct`).
+  `LOVABLE_API_KEY` is **not required** in this mode — nothing calls `ai.gateway.lovable.dev`.
+- If it is unset, the app falls back to the hosted Lovable AI Gateway (default for the cloud preview).
+- If neither is configured, AI features degrade gracefully (fallback text/outcomes) instead of crashing;
+  chat returns a clear `No LLM configured` error.
 
 Matching env values:
 
-| Backend | `AI_BASE_URL` | `AI_MODEL` | `LOVABLE_API_KEY` |
+| Backend | `AIXIN_LLM_BASE_URL` | `AIXIN_LLM_MODEL` | `AIXIN_LLM_API_KEY` |
 | --- | --- | --- | --- |
-| Ollama (local) | `http://127.0.0.1:11434/v1` | `qwen2.5:14b-instruct` | any non-empty string, e.g. `ollama` |
+| Ollama (Docker stack) | `http://ollama:11434/v1` | `qwen2.5:14b-instruct` | `ollama` (any non-empty string) |
+| Ollama (host install) | `http://127.0.0.1:11434/v1` | `qwen2.5:14b-instruct` | `ollama` |
 | Alibaba Qwen (DashScope) | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` | your DashScope key |
 | DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` | your DeepSeek key |
 | Moonshot / Kimi | `https://api.moonshot.cn/v1` | `moonshot-v1-32k` | your Moonshot key |
 | Zhipu GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-plus` | your Zhipu key |
 
+`docker/compose.yml` already passes all three into the app container, so on the Docker path you only edit `docker/.env`.
+
 **Tool calling matters.** AiXin's Master Twin delegates through tools (`delegate_to_specialist` etc.). Pick a model with solid function-calling support: `qwen2.5:14b-instruct` or larger locally; `qwen-plus`, `deepseek-chat`, or `glm-4-plus` in the cloud. Small models (≤7B) frequently fail to emit valid tool calls and the Ask AiXin flow will stall.
+
+> Governance is model-independent: SIP validation, Ed25519 receipt signing, and BSC Testnet anchoring are deterministic code and behave identically on a local model.
+> One exception: the **Telegram adapter** reaches Telegram through the Lovable connector gateway and still needs `LOVABLE_API_KEY` + `TELEGRAM_API_KEY`. Telegram is unreachable from mainland China anyway — leave the adapter off there.
 
 ---
 
@@ -261,8 +502,9 @@ SUPABASE_ANON_KEY=<supabase anon key>
 SUPABASE_SERVICE_ROLE_KEY=<supabase service role key>
 
 # ---- Server: LLM ----
-AI_BASE_URL=http://127.0.0.1:11434/v1
-AI_MODEL=qwen2.5:14b-instruct
+AIXIN_LLM_BASE_URL=http://127.0.0.1:11434/v1
+AIXIN_LLM_API_KEY=ollama
+AIXIN_LLM_MODEL=qwen2.5:14b-instruct
 LOVABLE_API_KEY=ollama          # reused as the bearer for the chosen provider
 
 # ---- Server: receipt anchoring (optional) ----
@@ -289,7 +531,7 @@ PORT=3000
 | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Yes | Server functions return "Server misconfigured" |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Public verify endpoint and admin paths fail |
 | `LOVABLE_API_KEY` (bearer for the LLM) | Yes | Chat returns 500 |
-| `AI_BASE_URL`, `AI_MODEL` | After §4.2 | Falls back to the blocked Lovable gateway |
+| `AIXIN_LLM_BASE_URL`, `AIXIN_LLM_API_KEY`, `AIXIN_LLM_MODEL` | Yes, in China | Unset = falls back to the (blocked) Lovable AI Gateway |
 | `BSC_TESTNET_*`, `AUDIT_ANCHOR_CONTRACT_ADDRESS` | No | Receipts hashed and stored with `tx_hash: null`, shown as "not anchored" |
 | `ERC8004_*` | No | Registry writes report `simulated` |
 | `AIXIN_VALIDATOR_URL` | No | Receipts hashed locally but unsigned, with a `degraded_reason` |
@@ -695,7 +937,7 @@ New-NetFirewallRule -DisplayName "AiXin HTTPS" -Direction Inbound -LocalPort 443
 
 ### 8.4 Keeping the LLM inside the VPC
 
-Whether you run Ollama on a separate GPU ECS or use DashScope over a VPC endpoint, set `AI_BASE_URL` to the **private** address (e.g. `http://10.0.1.12:11434/v1`) and allow port 11434 only from the app instance's security group. No LLM traffic should traverse the public internet.
+Whether you run Ollama on a separate GPU ECS or use DashScope over a VPC endpoint, set `AIXIN_LLM_BASE_URL` to the **private** address (e.g. `http://10.0.1.12:11434/v1`) and allow port 11434 only from the app instance's security group. No LLM traffic should traverse the public internet.
 
 ### 8.5 Anchor retry cron
 
