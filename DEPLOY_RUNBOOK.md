@@ -4,7 +4,8 @@ This is the **ordered, copy-paste runbook**. Do the steps in the order given; ea
 ends with a **CHECKPOINT** you must pass before continuing. If a checkpoint fails, fix it
 there — do not skip ahead.
 
-- **Part A — Ubuntu 24.04 on Alibaba Cloud ECS (with NVIDIA GPUs).** Your primary target.
+- **Part R — RunPod GPU Pod.** Fast interim environment when Alibaba connectivity is unstable.
+- **Part A — Ubuntu 24.04 on Alibaba Cloud ECS (with NVIDIA GPUs).** Your mainland target.
 - **Part B — Windows 11 laptop.** Do this only after Part A works.
 - **Part C — the day-to-day loop:** develop in Manus → push to Git → pull and redeploy on the server.
 
@@ -18,6 +19,182 @@ Conventions used below:
 - Anything in `<angle brackets>` is a value **you** replace.
 - "Run as root" on ECS means you are already `root@iZ...` as in a fresh Alibaba image. If you
   are a normal user, prefix commands with `sudo`.
+
+---
+
+## Part R — RunPod GPU Pod (interim working environment)
+
+This route gets AiXin running without waiting for Alibaba Cloud troubleshooting. It runs the
+**AiXin web server and private Qwen/Ollama model on RunPod**, while the existing managed AiXin
+backend continues to provide authentication and the database. This is deliberate: RunPod Pods are
+already containers and are not a dependable Docker Compose host for the six-container local stack.
+
+Do **not** choose Serverless for this first deployment. Choose:
+
+- **Secure Cloud → GPU Pod → On-demand** (not Spot/Community);
+- an L40S, A40, RTX 4090, or another GPU with 24–48 GB VRAM;
+- a current **RunPod PyTorch** template;
+- a **100–150 GB persistent network volume mounted at `/workspace`**;
+- HTTP port **3000** only. Do not expose 11434, 5432, or database/auth ports.
+
+The exact GPU inventory and hourly prices change, so select by VRAM and availability rather than
+following a hard-coded product name or price.
+
+### R1. Create and connect to the Pod
+
+1. In RunPod, create the Pod using the choices above.
+2. Wait until its status is **Running**.
+3. Open **Connect** and copy its SSH command. It resembles:
+
+   ```powershell
+   ssh root@<runpod-ssh-host> -p <runpod-ssh-port> -i $HOME\.ssh\id_ed25519
+   ```
+
+4. Paste that command into PowerShell on your own computer.
+5. After connecting, verify the GPU and persistent mount:
+
+   ```bash
+   nvidia-smi
+   df -h /workspace
+   touch /workspace/persistence-test && ls -l /workspace/persistence-test
+   ```
+
+**CHECKPOINT R1:** `nvidia-smi` shows the rented GPU and `/workspace` has the network-volume size
+you selected. Stop here if `/workspace` is not persistent.
+
+### R2. Install Git and download AiXin
+
+Run inside the RunPod terminal:
+
+```bash
+apt-get update
+apt-get install -y git curl ca-certificates nano jq
+git --version
+
+cd /workspace
+git clone https://github.com/aixin-protocol/aixin-twin.git aixin
+cd /workspace/aixin
+git log --oneline -3
+```
+
+If the folder already exists after a Pod restart, update instead of cloning:
+
+```bash
+cd /workspace/aixin
+git pull --ff-only
+```
+
+**CHECKPOINT R2:** `ls` shows `package.json`, `runpod/`, `scripts/`, and `src/`.
+
+### R3. Configure the environment without exposing secrets
+
+```bash
+cd /workspace/aixin
+cp runpod/.env.example runpod/aixin.local
+chmod 600 runpod/aixin.local
+nano runpod/aixin.local
+```
+
+Copy the existing backend URL, publishable key, and project ID from the current app environment
+into the matching fields. A publishable key is designed for browser use; private testnet keys are
+not. Put optional private keys only in `runpod/aixin.local`, which Git ignores, and never paste that file
+into chat, screenshots, or commits.
+
+Keep these Qwen values for the first test:
+
+```dotenv
+AIXIN_LLM_BASE_URL=http://127.0.0.1:11434/v1
+AIXIN_LLM_API_KEY=ollama
+AIXIN_LLM_MODEL=qwen2.5:14b-instruct
+HOST=0.0.0.0
+PORT=3000
+```
+
+Use `qwen2.5:7b-instruct` if the Pod has less than 24 GB VRAM. Larger models improve tool calling
+but increase download time, memory use, and cost.
+
+**CHECKPOINT R3:** this command prints `configuration present` without printing any values:
+
+```bash
+grep -q '<' runpod/aixin.local && echo 'ERROR: placeholders remain' || echo 'configuration present'
+```
+
+### R4. One-command install, build, and start
+
+```bash
+cd /workspace/aixin
+chmod +x scripts/runpod-up.sh
+./scripts/runpod-up.sh
+```
+
+The script installs Bun and Ollama, stores model weights and logs under persistent `/workspace`,
+pulls Qwen, builds the Node-server version of AiXin, and starts both processes with `nohup` so an
+SSH disconnect does not stop them. The first model pull can take several minutes.
+
+Verify without printing secrets:
+
+```bash
+curl -I http://127.0.0.1:3000/
+curl -s http://127.0.0.1:11434/api/tags | jq '.models[].name'
+nvidia-smi
+tail -n 30 /workspace/aixin-state/logs/app.log
+```
+
+**CHECKPOINT R4:** the first command returns HTTP 200, the second lists Qwen, and `nvidia-smi`
+shows Ollama using GPU memory after a model request.
+
+### R5. Open AiXin through RunPod
+
+In the Pod page, open **Connect → HTTP Services → port 3000**. RunPod provides an HTTPS proxy URL.
+Open it in a private browser window and complete the functional test in **A10**.
+
+Do not expose port 11434 through RunPod. AiXin reaches it locally inside the Pod, and making it
+public would let strangers consume the GPU.
+
+**CHECKPOINT R5:** login, Ask AiXin, and one Decision Card work from the HTTPS proxy URL.
+
+### R6. Stop, restart, update, and recover
+
+Before relying on the Pod, test persistence:
+
+1. Stop the Pod in RunPod (do **not** terminate it).
+2. Start it again and reconnect.
+3. Confirm `/workspace/aixin` and `/workspace/aixin-state/ollama-models` still exist.
+4. Restart the services:
+
+   ```bash
+   cd /workspace/aixin
+   ./scripts/runpod-up.sh
+   ```
+
+After future code pushes:
+
+```bash
+cd /workspace/aixin
+git pull --ff-only
+./scripts/runpod-up.sh
+curl -I http://127.0.0.1:3000/
+```
+
+If the site fails, inspect:
+
+```bash
+tail -n 100 /workspace/aixin-state/logs/app.log
+tail -n 100 /workspace/aixin-state/logs/ollama.log
+```
+
+Stopping saves compute charges but storage charges continue. **Terminating may delete Pod-local
+data**; verify the network volume and backups first.
+
+### R7. What this interim route does not prove
+
+- RunPod does not provide a confirmed mainland-China region. Test the proxy URL from China Mobile,
+  China Telecom/Unicom, and the actual target users before treating it as production.
+- RunPod's proxy hostname may change when infrastructure is recreated; it is not the final custom
+  domain/ICP architecture.
+- The managed backend remains external in this interim route. Moving auth/database is a separate,
+  planned migration—not something to improvise inside a GPU Pod.
+- Keep the Alibaba instance. Diagnose it in parallel; do not destroy it just because RunPod works.
 
 ---
 
@@ -332,14 +509,19 @@ docker system prune -f
 
 **CHECKPOINT A11:** after a reboot, the site answers on port 80 with no manual action.
 
-### Important caveat about the local LLM
+### The local LLM is env-driven (no code change needed)
 
-The app today calls the Lovable AI Gateway (`LOVABLE_API_KEY`) in `src/routes/api/chat.ts`.
-To route it at Ollama or a domestic provider you must apply the small code change documented
-in **`SELF_HOSTING.md` §4.2** (swap the provider's base URL/key/model for
-`AIXIN_LLM_BASE_URL` / `AIXIN_LLM_API_KEY` / `AIXIN_LLM_MODEL`). Do that change in Manus, push
-it, and it arrives on the server via Part C. Until then, `AIXIN_LLM_*` is wired end-to-end in
-the infrastructure but ignored by the app, and chat needs a reachable gateway.
+Setting **`AIXIN_LLM_BASE_URL`** in `docker/.env` is all it takes: every AI call in the app
+(chat, task threads, outcome generation, SkillCraft) resolves its model from
+`AIXIN_LLM_BASE_URL` / `AIXIN_LLM_API_KEY` / `AIXIN_LLM_MODEL` and never touches
+`ai.gateway.lovable.dev`. `LOVABLE_API_KEY` is not required on your ECS.
+
+Leave `AIXIN_LLM_BASE_URL` unset only if you deliberately want the hosted Lovable gateway.
+On this GPU box keep `AIXIN_LLM_MODEL=qwen2.5:14b-instruct` (or larger) — models at 7B and
+below often fail to emit valid tool calls, which stalls delegation.
+
+The only remaining Lovable-gateway dependency is the **Telegram adapter** (connector gateway),
+which is unreachable from mainland China regardless — leave it disabled there.
 
 ---
 
@@ -531,7 +713,7 @@ gunzip -c /var/backups/aixin-<date>.sql.gz | docker compose -f docker/compose.ym
 | Login redirects to the wrong host | `PUBLIC_SITE_URL` / `GOTRUE_SITE_URL` mismatch | Set `PUBLIC_SITE_URL` to the exact origin users type, restart `auth` |
 | Blank page, `db` unhealthy | migrations not applied | `./scripts/aixin-up.sh` again, or apply `supabase/migrations/*.sql` in filename order |
 | Receipts show "not anchored" | no RPC / anchor key | Expected and honest; set `BSC_TESTNET_RPC_URL` + `BSC_ANCHOR_PRIVATE_KEY` to anchor |
-| Chat errors about a missing API key | app still targets the Lovable gateway | Apply the provider change in `SELF_HOSTING.md` §4.2 |
+| Chat returns `No LLM configured` | `AIXIN_LLM_BASE_URL` missing from `docker/.env` (and no `LOVABLE_API_KEY`) | Set the three `AIXIN_LLM_*` values, then `docker compose ... restart app` |
 | Model OOM / very slow | model too large for the card | Use `qwen2.5:7b-instruct`, or pin one GPU with `CUDA_VISIBLE_DEVICES=0` |
 | Site reachable locally, not publicly | ECS security group | Open 80/443 inbound (**A9**) |
 
@@ -541,6 +723,7 @@ gunzip -c /var/backups/aixin-<date>.sql.gz | docker compose -f docker/compose.ym
 
 | Part | First time | Repeat |
 | --- | --- | --- |
+| Part R RunPod interim | 20–45 min plus model download | 3–6 min |
 | A0–A3 host prep | 20 min | — |
 | A4–A6 source + env + keys | 20 min | — |
 | A7 first build and bring-up | 15–40 min | 3–6 min (C1) |

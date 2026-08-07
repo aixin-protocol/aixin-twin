@@ -10,6 +10,11 @@ Ubuntu 24.04 (Alibaba Cloud ECS, NVIDIA GPU) and Windows 11, with checkpoints af
 This file is the reference: architecture, blocked-service swaps, manual (non-Docker) routes, and
 the full environment-variable table.
 
+If Alibaba Cloud is currently too slow or disconnecting, start with **Part R** of
+[`DEPLOY_RUNBOOK.md`](./DEPLOY_RUNBOOK.md). It provides a beginner, checkpoint-by-checkpoint RunPod
+GPU Pod route for the web app plus private Qwen while retaining the existing managed backend. Treat
+that as an interim development/demo environment until mainland-China connectivity is measured.
+
 If you have never used a terminal, Git, or Docker before, **start with §0.0 below** — it installs
 and explains every tool from zero. If your tools are already installed, skip to
 **§0 One-click Docker setup**.

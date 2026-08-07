@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "aixin-payments": {
+      "transport": "streamable-http",
+      "url": "https://twin-trust-orchestrator.lovable.app/api/public/openclaw/mcp",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer aixin-demo-key-openclaw"
+      },
+      "tls_verification": true,
+      "parallel_tool_calls": false,
+      "connect_timeout_ms": 15000,
+      "request_timeout_ms": 30000,
+      "tool_selection": [
+        "get_customer",
+        "list_orders",
+        "list_refunds",
+        "issue_refund"
+      ]
+    }
+  }
+}
