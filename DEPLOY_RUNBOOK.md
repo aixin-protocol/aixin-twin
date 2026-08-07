@@ -322,6 +322,16 @@ git clone https://gitee.com/<you>/aixin-twin.git aixin
 **CHECKPOINT A4:** `ls /opt/aixin` shows `Dockerfile`, `docker/`, `scripts/`, `supabase/`,
 `package.json`.
 
+If you cloned earlier and `supabase/` or `package.json` are missing, you have an older clone
+from before the full application source was published. Update it in place:
+
+```bash
+cd /opt/aixin
+git pull origin main
+ls package.json supabase/migrations | head
+```
+
+
 ### A5. Fill in the environment file (10 min — the step people get wrong)
 
 ```bash
