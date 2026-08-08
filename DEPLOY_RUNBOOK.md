@@ -337,18 +337,23 @@ ls package.json supabase/migrations | head
 ```bash
 cd /opt/aixin
 cp docker/.env.example docker/.env
+chmod 600 docker/.env
 
-# generate the two secrets you need
+# generate the three secrets you need, one line at a time
 openssl rand -hex 32     # -> JWT_SECRET
 openssl rand -hex 24     # -> POSTGRES_PASSWORD
+openssl rand -hex 32     # -> AIXIN_SIGNING_SEED  (signs receipts)
 
-nano docker/.env
+nano docker/.env         # paste the values in; Ctrl+O to save, Ctrl+X to exit
 ```
+
+Every variable name below is read verbatim by the application code. If you rename one,
+the feature it belongs to silently switches off — so copy the names exactly.
 
 Minimum viable values for a fully local, China-safe deployment:
 
 ```dotenv
-SITE_ADDRESS=:80                      # or aixin.example.cn for automatic HTTPS
+SITE_ADDRESS=:80                       # or aixin.example.cn for automatic HTTPS
 PUBLIC_SITE_URL=http://<ecs-public-ip>
 NPM_REGISTRY=https://registry.npmmirror.com
 
@@ -356,41 +361,62 @@ POSTGRES_PASSWORD=<from openssl rand -hex 24>
 POSTGRES_DB=aixin
 JWT_SECRET=<from openssl rand -hex 32>
 
-# Local data plane (the "supabase" profile serves these on the host)
-SUPABASE_URL=http://localhost:8000
-VITE_SUPABASE_URL=http://<ecs-public-ip>:8000
-VITE_SUPABASE_PUBLISHABLE_KEY=<anon key you generate in A6>
-VITE_SUPABASE_PROJECT_ID=aixin-local
-SUPABASE_SERVICE_ROLE_KEY=<service key you generate in A6>
+# --- Data plane, server side (read at runtime inside the app container) ---
+SUPABASE_URL=http://rest:3000          # PostgREST on the compose network
+SUPABASE_PUBLISHABLE_KEY=<ANON key from A6>
+SUPABASE_SERVICE_ROLE_KEY=<SERVICE key from A6>
 
-# Local GPU LLM
+# --- Data plane, browser side (compiled INTO the bundle at build time) ---
+VITE_SUPABASE_URL=http://<ecs-public-ip>:8000
+VITE_SUPABASE_PUBLISHABLE_KEY=<same ANON key from A6>
+VITE_SUPABASE_PROJECT_ID=aixin-local
+
+# --- Local GPU LLM ---
 AIXIN_LLM_BASE_URL=http://ollama:11434/v1
 AIXIN_LLM_API_KEY=ollama
 AIXIN_LLM_MODEL=qwen2.5:14b-instruct   # 7b if you want it lighter
 
-# Receipt anchoring — leave blank to run honestly un-anchored
-BSC_TESTNET_RPC_URL=
-BSC_ANCHOR_PRIVATE_KEY=
-RECEIPT_SIGNING_PRIVATE_KEY=
+# --- Receipt signing. Blank = receipts show an honest "unsigned" state. ---
+AIXIN_SIGNING_SEED=<from openssl rand -hex 32>
 
-# Telegram is blocked in CN — leave empty
-TELEGRAM_BOT_TOKEN=
+# --- On-chain anchoring. All blank = honest "not anchored" state, app still works. ---
+BSC_TESTNET_RPC_URL=
+BSC_TESTNET_PRIVATE_KEY=
+AUDIT_ANCHOR_CONTRACT_ADDRESS=
+ERC8004_IDENTITY_ADDRESS=
+ERC8004_REPUTATION_ADDRESS=
+ERC8004_VALIDATION_ADDRESS=
+
+# --- Optional ---
+AIXIN_VALIDATOR_URL=                   # blank = in-process SIP validation
+TELEGRAM_API_KEY=                      # Telegram is blocked in CN — leave empty
+GITHUB_API_KEY=                        # developer tooling only
 ```
 
-Two rules to remember:
+Beginner notes that save hours:
 
-1. `VITE_*` values are **baked into the browser bundle at build time**. They must be URLs the
-   *browser* can reach (your public IP or domain), not `localhost`. Changing them requires a
-   rebuild, not a restart.
+1. `VITE_*` values are **baked into the browser bundle when the image is built**. They must be
+   URLs the *visitor's browser* can reach — your ECS public IP or domain, never `localhost`.
+   Changing them requires `--build` again, not just a restart.
 2. Everything without the `VITE_` prefix is read on the server at runtime; changing those only
-   needs `docker compose restart app`.
+   needs `docker compose ... up -d` (or `restart app`).
+3. Gmail delivery needs **no** environment variables. Each user pastes their own Google OAuth
+   client ID / secret / refresh token in **Dashboard → Adapters** and they are stored in the
+   database. Same for per-user Telegram bots and signed webhooks.
+4. Anchoring, signing, and the external validator are all optional. With them blank the app runs
+   and tells the truth ("unsigned" / "not anchored") instead of pretending.
 
-**CHECKPOINT A5:** `grep -c '=' docker/.env` returns a number, and no line still says
-`change-me`.
+**CHECKPOINT A5:** this prints `env looks complete` —
+
+```bash
+cd /opt/aixin
+grep -Eq 'change-me|<' docker/.env && echo 'ERROR: placeholders remain' || echo 'env looks complete'
+```
 
 ### A6. Generate the anon / service keys (5 min)
 
-The self-hosted data plane signs its two API keys with your `JWT_SECRET`.
+The self-hosted data plane (GoTrue + PostgREST) authenticates callers with two JWTs signed by
+your `JWT_SECRET`. You mint them once:
 
 ```bash
 cd /opt/aixin
@@ -405,10 +431,15 @@ docker run --rm -e JWT_SECRET="$(grep '^JWT_SECRET=' docker/.env | cut -d= -f2-)
   "'
 ```
 
-Paste `ANON` into `VITE_SUPABASE_PUBLISHABLE_KEY` and `SERVICE` into
-`SUPABASE_SERVICE_ROLE_KEY` in `docker/.env`.
+Then in `docker/.env`:
 
-**CHECKPOINT A6:** both keys are long three-part strings separated by dots.
+- paste `ANON` into **both** `SUPABASE_PUBLISHABLE_KEY` and `VITE_SUPABASE_PUBLISHABLE_KEY`;
+- paste `SERVICE` into `SUPABASE_SERVICE_ROLE_KEY`.
+
+If you ever change `JWT_SECRET`, both keys must be regenerated and the app rebuilt.
+
+**CHECKPOINT A6:** both keys are long three-part strings separated by dots, and
+`grep -c 'PUBLISHABLE_KEY=ey' docker/.env` returns `2`.
 
 ### A7. First bring-up (15–40 min, mostly image pulls and the app build)
 
@@ -420,20 +451,34 @@ chmod +x scripts/aixin-up.sh
 AIXIN_GPU=1 AIXIN_PROFILES="--profile llm --profile supabase" ./scripts/aixin-up.sh
 ```
 
-What the script does, in order: builds the app image (Bun install → `vite build` with
-`NITRO_PRESET=node-server` → Node 22 runtime), starts Postgres and waits for it to be healthy,
-starts `auth`, `rest`, `ollama`, `app`, `proxy`, pulls your Ollama model, then applies every
-file in `supabase/migrations/` in filename order.
+What the script does, in order:
+
+1. builds the app image (Bun install → `vite build` with `NITRO_PRESET=node-server` → Node 22
+   runtime), so no Cloudflare Workers runtime is involved;
+2. starts Postgres and waits until it reports healthy;
+3. starts `auth` (GoTrue), `rest` (PostgREST), `ollama`, `app`, `proxy` (Caddy);
+4. pulls your Ollama model;
+5. **waits for GoTrue to create the `auth` schema**, then applies every file in
+   `supabase/migrations/` in filename order. This order matters: the AiXin tables reference
+   `auth.users`, so applying the SQL before GoTrue has migrated fails with
+   `relation "auth.users" does not exist`. That is why the migrations are *not* mounted into
+   Postgres' `docker-entrypoint-initdb.d`;
+6. restarts `app` so it sees the finished schema.
+
+Re-running the script later is safe: already-applied migrations are skipped.
 
 Watch it:
 
 ```bash
+cd /opt/aixin
 docker compose -f docker/compose.yml -f docker/compose.gpu.yml --env-file docker/.env \
   --profile llm --profile supabase ps
 docker compose -f docker/compose.yml --env-file docker/.env logs -f app
 ```
 
-**CHECKPOINT A7:** every service shows `running` (and `db` shows `healthy`).
+**CHECKPOINT A7:** every service shows `running` (and `db` shows `healthy`), and the script
+printed `auth schema ready` followed by the migration pass with no `ERROR:` lines.
+
 
 ### A8. Verify each layer bottom-up (10 min)
 
@@ -494,7 +539,7 @@ Do this in the browser, in order — it is also the demo script:
    (customer, order, ledger-verified tiles, risk flags).
 7. **Approve** with a rationale → a **receipt** is written.
 8. **Reputation** → the receipt shows `Signed`; it shows `Anchored` with a BscScan link only if
-   you supplied `BSC_TESTNET_RPC_URL` + `BSC_ANCHOR_PRIVATE_KEY`, otherwise an honest
+   you supplied `BSC_TESTNET_RPC_URL` + `BSC_TESTNET_PRIVATE_KEY`, otherwise an honest
    "not anchored" state.
 9. Open `http://<ecs-ip>/verify/<sipId>` → the public verification page renders.
 10. Switch language to 简体中文 and repeat step 5 to confirm the ZH path.
@@ -576,11 +621,12 @@ mkdir -p ~/src && cd ~/src
 git clone https://github.com/aixin-protocol/aixin-twin.git aixin && cd aixin
 
 cp docker/.env.example docker/.env
-nano docker/.env      # same values as A5, but:
+nano docker/.env      # same variable names as A5, but:
                       #   SITE_ADDRESS=:8080
                       #   HTTP_PORT=8080
                       #   PUBLIC_SITE_URL=http://localhost:8080
-                      #   VITE_SUPABASE_URL=http://localhost:8000
+                      #   SUPABASE_URL=http://rest:3000          (server side)
+                      #   VITE_SUPABASE_URL=http://localhost:8000 (browser side)
                       #   AIXIN_LLM_MODEL=qwen2.5:7b-instruct   (laptops)
 chmod +x scripts/aixin-up.sh
 AIXIN_PROFILES="--profile llm --profile supabase" ./scripts/aixin-up.sh   # add AIXIN_GPU=1 on GPU laptops
@@ -719,10 +765,13 @@ gunzip -c /var/backups/aixin-<date>.sql.gz | docker compose -f docker/compose.ym
 | `could not select device driver ... gpu` | NVIDIA Container Toolkit missing | Redo **A3** |
 | Ollama replies but GPU shows 0 % | GPU override not passed | Use `AIXIN_GPU=1` (adds `docker/compose.gpu.yml`) |
 | `bun install` extremely slow | npm registry | `NPM_REGISTRY=https://registry.npmmirror.com` in `docker/.env` |
-| App loads but every request 401s | wrong `VITE_SUPABASE_PUBLISHABLE_KEY` | Regenerate keys (**A6**) with the *current* `JWT_SECRET`, rebuild |
+| App loads but every request 401s | wrong/blank `VITE_SUPABASE_PUBLISHABLE_KEY` | Regenerate keys (**A6**) with the *current* `JWT_SECRET`, rebuild |
+| Signed-in pages 401 while the landing page works | `SUPABASE_PUBLISHABLE_KEY` (server side, no `VITE_`) not set | Set it to the same ANON key, `docker compose ... up -d app` |
+| Migration fails `relation "auth.users" does not exist` | SQL applied before GoTrue migrated | Start with `--profile supabase` and use `scripts/aixin-up.sh`, which waits for the `auth` schema |
+| Receipts show "unsigned" | `AIXIN_SIGNING_SEED` blank | `openssl rand -hex 32`, set it, restart `app` |
 | Login redirects to the wrong host | `PUBLIC_SITE_URL` / `GOTRUE_SITE_URL` mismatch | Set `PUBLIC_SITE_URL` to the exact origin users type, restart `auth` |
 | Blank page, `db` unhealthy | migrations not applied | `./scripts/aixin-up.sh` again, or apply `supabase/migrations/*.sql` in filename order |
-| Receipts show "not anchored" | no RPC / anchor key | Expected and honest; set `BSC_TESTNET_RPC_URL` + `BSC_ANCHOR_PRIVATE_KEY` to anchor |
+| Receipts show "not anchored" | no RPC / anchor key | Expected and honest; set `BSC_TESTNET_RPC_URL` + `BSC_TESTNET_PRIVATE_KEY` + `AUDIT_ANCHOR_CONTRACT_ADDRESS` to anchor |
 | Chat returns `No LLM configured` | `AIXIN_LLM_BASE_URL` missing from `docker/.env` (and no `LOVABLE_API_KEY`) | Set the three `AIXIN_LLM_*` values, then `docker compose ... restart app` |
 | Model OOM / very slow | model too large for the card | Use `qwen2.5:7b-instruct`, or pin one GPU with `CUDA_VISIBLE_DEVICES=0` |
 | Site reachable locally, not publicly | ECS security group | Open 80/443 inbound (**A9**) |
