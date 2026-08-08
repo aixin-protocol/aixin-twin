@@ -97,7 +97,7 @@
 - [ ] **Realistic intent capture** — before Plan, ask domain-specific follow-ups (Travel: from/to/dates/pax/budget; Marketing: channels/audience/dates; Money: amount/currency/counterparty). No plan is produced until required slots are filled. *Blocks a believable demo.*
 - [ ] **Task management UX** — start a new task while another runs, resume an in-flight task from `/dashboard/tasks` back into the live activity view, archive/delete tasks, "Running" badge in sidebar. *Blocks multi-task demo.* (delete shipped; parallel + resume + badge still open)
 - [ ] **On-chain evidence panel** per task — plain-language "what this tx proves" tooltip on every hash (audit anchor = payload hash committed; ERC-8004 Identity = agent registered; Reputation = feedback score signed; Validation = validator request+response). Link each to BscScan with the exact function called.
-- [ ] **ERC-8004 visibility** — surface the three registry txs (Identity / Reputation / Validation) on the Reputation page and the task receipt drawer with contract addresses + BscScan links, not just the audit anchor. Backend already writes them via `erc8004.server.ts`; UI needs to show them.
+- [x] **ERC-8004 visibility** — the three registry txs (Identity / Reputation / Validation) plus the audit anchor are surfaced with contract addresses + BscScan links on the Reputation page and the task receipt panel via the shared `OnChainEvidence` component.
 - [x] **Full ZH i18n coverage (pre-IDO blocker)** — dashboard routes, modals, empty states, toasts, error messages, tooltips and seeded demo copy render in Simplified Chinese; static strings live in `src/lib/i18n*.ts(x)` and dynamic DB/AI content goes through `td()`, with task outcomes and chat replies generated in the user's locale. Verified in both locales by `e2e/ui-smoke.py`.
 - [x] **Mobile-first responsive pass (pre-IDO blocker)** — dashboard shell is mobile-first: the dark rail is desktop-only and replaced by a hamburger drawer (`MobileNav`), compact top bar with wrap-safe mode toggle, tighter banner/page padding, and a full-width Ask composer action. No horizontal overflow at 375 / 414 / 768px (asserted in `e2e/ui-smoke.py`).
 - [ ] Cut `v0.1.0` tag on `aixin-twin` (triggers `container.yml` → first published GHCR image).
@@ -110,8 +110,10 @@
 > must either become real or fail loudly with a visible "degraded" badge.
 
 **3.5.a — Cryptographic truth (highest priority)**
-- [ ] **Deploy `@aixin-protocol/validator-server` to a public URL** and set `AIXIN_VALIDATOR_URL`. Today the secret is unset, so `validator-client.server.ts` silently falls back to the in-process validator and every receipt is stored with `signature: null` / `public_key: null` — receipts are *hashed but not signed*. This is the single biggest gap to "live".
-- [ ] **Publish the validator public key** (`/v1/pubkey` + `spec.aixin.io/keys`) so any third party can verify a receipt signature offline.
+- [x] **Receipts are really signed (Ed25519)** — `src/lib/receipt-signer.server.ts` derives an Ed25519 key from the `AIXIN_SIGNING_SEED` secret and signs every receipt's `payload_hash` in-process, so approvals and rejections carry a verifiable signature instead of `signature: null`. `validator-client.server.ts` prefers an external `@aixin-protocol/validator-server` when `AIXIN_VALIDATOR_URL` is set and falls back to in-process signing with a recorded reason — it never silently returns an unsigned receipt. Round-trip + tamper tests in `src/lib/receipt-signer.test.ts`.
+- [x] **Publish the validator public key** — public `GET /api/public/keys` (CORS, cached) returns the Ed25519 public key as hex / base64 / JWK with the key id, signing scheme and chain id, so any third party can verify a receipt signature offline; `/api/public/verify/:sipId` now returns `algorithm` + `keys_url`.
+- [ ] **Deploy `@aixin-protocol/validator-server` to a public URL** and set `AIXIN_VALIDATOR_URL` — optional hardening: moves the signing key out of the app process into a standalone validator (needed before third-party validators are a thing).
+
 - [x] **Remove silent fallbacks** — `signReceiptWithValidator` now returns a `degraded_reason`, persisted on the receipt payload; the Reputation UI shows a red "Unsigned" badge with that reason instead of making an unsigned receipt look signed.
 - [x] **Receipt verification endpoint + UI** — public `GET /api/public/verify/:sipId` (PII-redacted, CORS-enabled) returning payload hash, signature, validator pubkey/URL, anchor tx and ERC-8004 txs, plus a bilingual `/verify/:sipId` page and a "Verify" link on every receipt row on `/dashboard/reputation`.
 - [x] **Anchor retry queue** — fake keccak hashes are gone (`anchor.server.ts` returns `txHash: null` and the UI shows "Not anchored"); a durable retry now exists: `POST /api/public/anchor/retry` (apikey-guarded, batches 10, max 12 attempts, records `anchor_attempts` / `anchor_last_error` / `anchor_last_attempt_at` on each receipt) scheduled by `pg_cron` every 15 minutes, plus `GET` for queue depth.
@@ -119,9 +121,10 @@
 **3.5.b — On-chain surface**
 - [ ] **Register the Master Twin + each Specialist Twin in ERC-8004 Identity at creation time** (persist `agent_id` on the `twins` row) instead of registering ad-hoc per action.
 - [ ] **Register a distinct validator agent** in Identity — validation currently self-validates (`agentValidatorId === agentServerId`), which is not a real trust claim.
-- [ ] **Surface all four txs per action** (Audit Anchor · Identity · Reputation · Validation) with contract addresses + BscScan deep links on the Reputation page and task receipt drawer.
-- [ ] **On-chain evidence explainer** — plain-language "what this tx proves" per hash (moved up from Phase 3).
-- [ ] **Chain health banner** — show gas balance of the anchoring wallet; alert when the faucet balance can no longer cover anchoring. Add a low-balance top-up runbook.
+- [x] **Surface all four txs per action** (Audit Anchor · Identity · Reputation · Validation) with contract addresses + BscScan deep links — shared `src/components/dashboard/OnChainEvidence.tsx` renders all four rows on `/dashboard/reputation` and on the task receipt panel, with an explicit "not written" state per missing tx (never implied proof).
+- [x] **On-chain evidence explainer** — bilingual plain-language "what this tx proves" line per hash, plus contract address links and the receipt payload hash.
+- [x] **Chain health banner** — `ChainHealthBanner` + `getChainStatus` read the anchoring wallet's live tBNB balance from BSC Testnet and warn (low / empty / unconfigured) with a faucet top-up link on `/dashboard/reputation`. Private key stays server-side.
+
 - [ ] **Contract verification on BscScan** (source + ABI published) for `AuditAnchor` and the three ERC-8004 registries, so the demo links show decoded functions, not raw input.
 
 **3.5.c — Real execution, not theatre**
