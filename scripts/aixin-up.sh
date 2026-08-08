@@ -13,13 +13,14 @@ if [ ! -f "$ENV_FILE" ]; then
   echo "Created $ENV_FILE from the example. Edit secrets, then re-run this script."
   exit 0
 fi
-
 # Values from docker/.env drive the psql calls below too.
 set -a
 # shellcheck disable=SC1090
 . "$ENV_FILE"
 set +a
 DB_NAME=${POSTGRES_DB:-aixin}
+# The server reads SUPABASE_PUBLISHABLE_KEY; fall back to the browser key if unset.
+export SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY:-${VITE_SUPABASE_PUBLISHABLE_KEY:-}}
 
 COMPOSE_FILES=(-f docker/compose.yml)
 if [ "${AIXIN_GPU:-0}" = "1" ]; then
@@ -41,12 +42,35 @@ if [[ "$PROFILES" == *llm* ]]; then
     echo "   (model pull failed — run it manually later)"
 fi
 
+# The app schema references auth.users, so GoTrue must have created the auth
+# schema before any migration is applied.
+if [[ "$PROFILES" == *supabase* ]]; then
+  echo "==> Waiting for the auth schema (GoTrue migrations)"
+  for _ in $(seq 1 60); do
+    if dc exec -T db psql -tAqU postgres -d "$DB_NAME" \
+        -c "select to_regclass('auth.users') is not null" 2>/dev/null | grep -q '^t$'; then
+      echo "   auth schema ready"
+      break
+    fi
+    sleep 2
+  done
+  if ! dc exec -T db psql -tAqU postgres -d "$DB_NAME" \
+      -c "select to_regclass('auth.users') is not null" 2>/dev/null | grep -q '^t$'; then
+    echo "ERROR: auth.users never appeared. Check: dc logs auth" >&2
+    exit 1
+  fi
+fi
+
 echo "==> Applying database migrations"
 for f in supabase/migrations/*.sql; do
   [ -e "$f" ] || continue
   dc exec -T db psql -v ON_ERROR_STOP=1 -U postgres -d "$DB_NAME" < "$f" >/dev/null || \
     echo "   skipped (already applied): $f"
 done
+
+echo "==> Restarting the app so it picks up the migrated schema"
+dc restart app >/dev/null
+
 
 echo "==> Status"
 dc $PROFILES ps
