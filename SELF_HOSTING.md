@@ -512,6 +512,9 @@ AIXIN_LLM_API_KEY=ollama
 AIXIN_LLM_MODEL=qwen2.5:14b-instruct
 LOVABLE_API_KEY=ollama          # reused as the bearer for the chosen provider
 
+# ---- Server: receipt signing (Ed25519 seed, hex; openssl rand -hex 32) ----
+AIXIN_SIGNING_SEED=
+
 # ---- Server: receipt anchoring (optional) ----
 BSC_TESTNET_RPC_URL=
 BSC_TESTNET_PRIVATE_KEY=
@@ -537,6 +540,7 @@ PORT=3000
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Public verify endpoint and admin paths fail |
 | `LOVABLE_API_KEY` (bearer for the LLM) | Yes | Chat returns 500 |
 | `AIXIN_LLM_BASE_URL`, `AIXIN_LLM_API_KEY`, `AIXIN_LLM_MODEL` | Yes, in China | Unset = falls back to the (blocked) Lovable AI Gateway |
+| `AIXIN_SIGNING_SEED` | Recommended | Receipts are stored unsigned and shown as "unsigned" |
 | `BSC_TESTNET_*`, `AUDIT_ANCHOR_CONTRACT_ADDRESS` | No | Receipts hashed and stored with `tx_hash: null`, shown as "not anchored" |
 | `ERC8004_*` | No | Registry writes report `simulated` |
 | `AIXIN_VALIDATOR_URL` | No | Receipts hashed locally but unsigned, with a `degraded_reason` |
