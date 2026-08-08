@@ -119,13 +119,13 @@
 - [x] **Anchor retry queue** — fake keccak hashes are gone (`anchor.server.ts` returns `txHash: null` and the UI shows "Not anchored"); a durable retry now exists: `POST /api/public/anchor/retry` (apikey-guarded, batches 10, max 12 attempts, records `anchor_attempts` / `anchor_last_error` / `anchor_last_attempt_at` on each receipt) scheduled by `pg_cron` every 15 minutes, plus `GET` for queue depth.
 
 **3.5.b — On-chain surface**
-- [ ] **Register the Master Twin + each Specialist Twin in ERC-8004 Identity at creation time** (persist `agent_id` on the `twins` row) instead of registering ad-hoc per action.
-- [ ] **Register a distinct validator agent** in Identity — validation currently self-validates (`agentValidatorId === agentServerId`), which is not a real trust claim.
+- [x] **Register the Master Twin + each Specialist Twin in ERC-8004 Identity at creation time** — `src/lib/identity.server.ts` (`ensureTwinIdentity`) registers on hatch / create-specialist / demo-seed and persists `agent_id`, `agent_domain` and `identity_tx_hash` on the twin row (`master_twins` gained those columns); the approval path is now only a backfill.
+- [x] **Register a distinct validator agent** in Identity — `ensureValidatorAgentId()` registers `validator.aixin.agent` once and caches it in the new `chain_agents` table; `requestAndRespondValidation` now passes it as `agentValidatorId`, and each receipt records `validation.validator_agent_id` + `self_validated` so a fallback to self-validation is visible instead of implied.
 - [x] **Surface all four txs per action** (Audit Anchor · Identity · Reputation · Validation) with contract addresses + BscScan deep links — shared `src/components/dashboard/OnChainEvidence.tsx` renders all four rows on `/dashboard/reputation` and on the task receipt panel, with an explicit "not written" state per missing tx (never implied proof).
 - [x] **On-chain evidence explainer** — bilingual plain-language "what this tx proves" line per hash, plus contract address links and the receipt payload hash.
 - [x] **Chain health banner** — `ChainHealthBanner` + `getChainStatus` read the anchoring wallet's live tBNB balance from BSC Testnet and warn (low / empty / unconfigured) with a faucet top-up link on `/dashboard/reputation`. Private key stays server-side.
 
-- [ ] **Contract verification on BscScan** (source + ABI published) for `AuditAnchor` and the three ERC-8004 registries, so the demo links show decoded functions, not raw input.
+- [ ] **Contract verification on BscScan** (source + ABI published) — needs a BscScan API key + the exact compiler settings used at deploy time (blocked on user input) for `AuditAnchor` and the three ERC-8004 registries, so the demo links show decoded functions, not raw input.
 
 **3.5.c — Real execution, not theatre**
 - [ ] **Adapter execution is real or blocked** — `execution.server.ts` still emits "Invoking {domain} adapters" as a narration event for any intent with no real tool. Every skill must declare a real adapter; intents with no live adapter must halt with an explicit "no live adapter — cannot execute" outcome instead of an AI-written artifact that looks like a result.
@@ -207,7 +207,7 @@ Ordered by dependency — do 1–6 before recording anything:
 
 1. **Slot-filling before Plan** in `/dashboard/ask` so vague intents ("plan a trip to Paris") trigger a short follow-up form instead of jumping to a fabricated itinerary.
 2. **Task manager**: parallel runs, resume-from-history, archive/delete, "N running" badge.
-3. **On-chain evidence panel**: per-tx explainer + ERC-8004 registry txs surfaced on Reputation + task drawer.
+3. ~~**On-chain evidence panel**~~ — ✅ shipped (per-tx explainer + all four registry txs on Reputation + task receipt panel).
 4. **Copy pass**: replace remaining simulation language with "reference simulation" labels where the backend isn't real yet (channel delivery to WhatsApp/WeChat, token payouts).
 5. ~~**Full ZH i18n coverage**~~ — ✅ shipped (no English leaks when the toggle is 中文).
 6. ~~**Mobile-first responsive pass**~~ — ✅ shipped (verified at 375/414/768px).
