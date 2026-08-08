@@ -128,15 +128,16 @@
 - [ ] **Contract verification on BscScan** (source + ABI published) — needs a BscScan API key + the exact compiler settings used at deploy time (blocked on user input) for `AuditAnchor` and the three ERC-8004 registries, so the demo links show decoded functions, not raw input.
 
 **3.5.c — Real execution, not theatre**
-- [ ] **Adapter execution is real or blocked** — `execution.server.ts` still emits "Invoking {domain} adapters" as a narration event for any intent with no real tool. Every skill must declare a real adapter; intents with no live adapter must halt with an explicit "no live adapter — cannot execute" outcome instead of an AI-written artifact that looks like a result.
-- [ ] **Remove the AI-generated outcome artifact as a success path** — keep it only as an explicitly labelled "draft / not executed" artifact.
+- [x] **Adapter execution is real or blocked** — `execution.server.ts` no longer narrates "Invoking {domain} adapters". `src/lib/execution-capability.ts` classifies every approved run: only a real deterministic tool (ledger refund write, live CoinGecko briefing, deterministic forecast) counts as executed. Anything else halts with a `BLOCKED` guard event ("No live adapter for {domain} — cannot execute", with instructions to connect a real adapter) and the task is persisted with the new `blocked` status instead of `done`. Rules unit-tested in `src/lib/execution-capability.test.ts`.
+- [x] **Remove the AI-generated outcome artifact as a success path** — when nothing was executed the artifact is explicitly labelled: title prefixed "Draft (not executed) / 草稿（未执行）", a bilingual "nothing was sent, booked, paid or written" notice at the top of the summary, and machine-readable `_executed: false` / `_status: "draft_not_executed"` markers on the artifact. The generator prompt is now proposal-only — it may not claim completed real-world actions or invent confirmation numbers.
+
 - [x] **Gmail adapter live send** (real SMTP/API send + message id in the receipt).
 - [x] **Email delivery confirmation + error surface** — the Plan step confirms/edits the recipient (mail icon, invalid-state highlight, "use adapter address" shortcut, opt-out toggle), follow-up chat requests ("please send to my email") deliver the existing artifact, and Task detail shows the sent recipient + message id or the exact Gmail failure reason. Decision logic extracted to `src/lib/delivery-rules.ts` with 13 regression tests in `src/lib/delivery-rules.test.ts`.
 - [x] **Delivery observability** — every send attempt (task run, chat thread, adapter test) is recorded in `delivery_logs` via `src/lib/delivery-log.server.ts` and surfaced as a bilingual "Delivery log" panel on Adapters and per-task on Task detail (recipient, message id, failure code/reason).
 - [x] **Local UI e2e smoke test** — `python3 e2e/ui-smoke.py` drives real Chromium over landing / ZH toggle / 375-414-768px widths / auth / dashboard route guard / public receipt verification / console errors (10/10 passing); see `e2e/README.md`.
 - [ ] **Webhook adapter live POST** with HMAC signing + delivery status/retries recorded in the receipt.
 - [ ] **Telegram adapter promoted from demo bot to per-user adapter credential** (link/unlink flow, delivery receipts).
-- [ ] **Drop WhatsApp / WeChat channel toggles** from Ask AiXin until a real provider is wired (currently unbacked UI). Ship Telegram + email + in-app only.
+- [x] **Drop WhatsApp / WeChat channel toggles** from Ask AiXin — the living-state channel row is now Telegram + in-app only (no unbacked provider UI).
 - [x] **Adapter connectivity test** — a "Test connection" button per adapter that performs a real round-trip and stores `last_verified_at`; a stale/failed adapter blocks Live skills.
 - [ ] **Remove demo-only seed data from the live path** (ORD-1001 refund fixtures) behind an explicit "Demo workspace" flag so a real testnet account starts empty.
 
