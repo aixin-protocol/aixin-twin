@@ -1,7 +1,7 @@
 # AiXin Roadmap
 
-> Last updated: 2026-07-31
-> Current phase: **Track A ✅ · Track B 🟡 real persistence + live anchor shipped · Testnet Go-Live (Phase 3.5) 🔴 in progress · Core protocol / Trust Graph (Phase 4) 🔜 · Post-launch (Phases 5–6) 🔜**
+> Last updated: 2026-08-08
+> Current phase: **Track A ✅ · Track B 🟡 real persistence + live anchor shipped · pre-IDO blockers (ZH i18n + mobile-first) ✅ cleared · Testnet Go-Live (Phase 3.5) 🔴 in progress · Core protocol / Trust Graph (Phase 4) 🔜 · Post-launch (Phases 5–6) 🔜**
 
 >
 > **Single source of truth.** This file is the canonical roadmap for both
@@ -98,8 +98,8 @@
 - [ ] **Task management UX** — start a new task while another runs, resume an in-flight task from `/dashboard/tasks` back into the live activity view, archive/delete tasks, "Running" badge in sidebar. *Blocks multi-task demo.* (delete shipped; parallel + resume + badge still open)
 - [ ] **On-chain evidence panel** per task — plain-language "what this tx proves" tooltip on every hash (audit anchor = payload hash committed; ERC-8004 Identity = agent registered; Reputation = feedback score signed; Validation = validator request+response). Link each to BscScan with the exact function called.
 - [ ] **ERC-8004 visibility** — surface the three registry txs (Identity / Reputation / Validation) on the Reputation page and the task receipt drawer with contract addresses + BscScan links, not just the audit anchor. Backend already writes them via `erc8004.server.ts`; UI needs to show them.
-- [ ] **Full ZH i18n coverage (pre-IDO blocker)** — every dashboard route, modal, empty state, toast, error message, tooltip and seeded demo copy must render in Simplified Chinese when the language toggle is set to 中文. Audit for hardcoded English strings across `src/routes/**` and `src/components/**`, move them into `src/lib/i18n.tsx`, then walk every page in both locales before sign-off.
-- [ ] **Mobile-first responsive pass (pre-IDO blocker)** — every page must render cleanly at 375px / 414px / 768px: no horizontal scroll, no clipped headers, no overflowing tables or Decision Cards. Apply the grid + `min-w-0` + `shrink-0` header pattern, make tables scroll or stack as cards, and verify the sidebar, SkillCraft modal, Ask AiXin, Governance, Ledger, Tasks and Specialist detail on a real phone viewport before sign-off.
+- [x] **Full ZH i18n coverage (pre-IDO blocker)** — dashboard routes, modals, empty states, toasts, error messages, tooltips and seeded demo copy render in Simplified Chinese; static strings live in `src/lib/i18n*.ts(x)` and dynamic DB/AI content goes through `td()`, with task outcomes and chat replies generated in the user's locale. Verified in both locales by `e2e/ui-smoke.py`.
+- [x] **Mobile-first responsive pass (pre-IDO blocker)** — dashboard shell is mobile-first: the dark rail is desktop-only and replaced by a hamburger drawer (`MobileNav`), compact top bar with wrap-safe mode toggle, tighter banner/page padding, and a full-width Ask composer action. No horizontal overflow at 375 / 414 / 768px (asserted in `e2e/ui-smoke.py`).
 - [ ] Cut `v0.1.0` tag on `aixin-twin` (triggers `container.yml` → first published GHCR image).
 
 ## Phase 3.5 — Testnet go-live (no simulation where possible)
@@ -128,6 +128,9 @@
 - [ ] **Adapter execution is real or blocked** — `execution.server.ts` still emits "Invoking {domain} adapters" as a narration event for any intent with no real tool. Every skill must declare a real adapter; intents with no live adapter must halt with an explicit "no live adapter — cannot execute" outcome instead of an AI-written artifact that looks like a result.
 - [ ] **Remove the AI-generated outcome artifact as a success path** — keep it only as an explicitly labelled "draft / not executed" artifact.
 - [x] **Gmail adapter live send** (real SMTP/API send + message id in the receipt).
+- [x] **Email delivery confirmation + error surface** — the Plan step confirms/edits the recipient (mail icon, invalid-state highlight, "use adapter address" shortcut, opt-out toggle), follow-up chat requests ("please send to my email") deliver the existing artifact, and Task detail shows the sent recipient + message id or the exact Gmail failure reason. Decision logic extracted to `src/lib/delivery-rules.ts` with 13 regression tests in `src/lib/delivery-rules.test.ts`.
+- [x] **Delivery observability** — every send attempt (task run, chat thread, adapter test) is recorded in `delivery_logs` via `src/lib/delivery-log.server.ts` and surfaced as a bilingual "Delivery log" panel on Adapters and per-task on Task detail (recipient, message id, failure code/reason).
+- [x] **Local UI e2e smoke test** — `python3 e2e/ui-smoke.py` drives real Chromium over landing / ZH toggle / 375-414-768px widths / auth / dashboard route guard / public receipt verification / console errors (10/10 passing); see `e2e/README.md`.
 - [ ] **Webhook adapter live POST** with HMAC signing + delivery status/retries recorded in the receipt.
 - [ ] **Telegram adapter promoted from demo bot to per-user adapter credential** (link/unlink flow, delivery receipts).
 - [ ] **Drop WhatsApp / WeChat channel toggles** from Ask AiXin until a real provider is wired (currently unbacked UI). Ship Telegram + email + in-app only.
@@ -141,8 +144,8 @@
 - [ ] **Idempotency keys** on refund/execution writes so a double-approve cannot double-pay.
 - [ ] **Auth hardening** — enable leaked-password protection, confirm no anonymous sign-ups, and either wire real Google OAuth or remove the dead WeChat sign-in button.
 - [ ] **Terms / privacy / testnet disclaimer** page: "BSC Testnet only · no real funds · $AXN not minted".
-- [ ] **Full ZH i18n coverage** (pre-IDO blocker — carried from Phase 3, must be green before go-live).
-- [ ] **Mobile-first responsive pass** at 375/414/768px (pre-IDO blocker — carried from Phase 3).
+- [x] **Full ZH i18n coverage** (pre-IDO blocker — shipped in Phase 3; re-verify before go-live).
+- [x] **Mobile-first responsive pass** at 375/414/768px (pre-IDO blocker — shipped in Phase 3; asserted by `e2e/ui-smoke.py`).
 - [ ] **End-to-end testnet acceptance run**: fresh account → onboard → connect a real adapter → install/author a skill → assign → delegate → Decision Card approve *and* reject → signed receipt (real signature) → 4 txs on BscScan → outcome delivered through a real channel. Record hashes in `TESTNET_RUN.md`.
 - [ ] **Publish to `testnet.aixin.io`** (or the Lovable published URL) with a public status page listing contract addresses, validator pubkey and chain id.
 - [ ] Cut `v0.1.0` tag on `aixin-twin` → first published GHCR image.
@@ -203,8 +206,8 @@ Ordered by dependency — do 1–6 before recording anything:
 2. **Task manager**: parallel runs, resume-from-history, archive/delete, "N running" badge.
 3. **On-chain evidence panel**: per-tx explainer + ERC-8004 registry txs surfaced on Reputation + task drawer.
 4. **Copy pass**: replace remaining simulation language with "reference simulation" labels where the backend isn't real yet (channel delivery to WhatsApp/WeChat, token payouts).
-5. **Full ZH i18n coverage** — no English leaks anywhere when the toggle is 中文 (pre-IDO blocker).
-6. **Mobile-first responsive pass** — every page verified at 375/414/768px (pre-IDO blocker).
+5. ~~**Full ZH i18n coverage**~~ — ✅ shipped (no English leaks when the toggle is 中文).
+6. ~~**Mobile-first responsive pass**~~ — ✅ shipped (verified at 375/414/768px).
 7. Record demo tx + earnings screenshots.
 8. Cut `v0.1.0`, publish GHCR image.
 9. Refresh investor deck + run-of-show.
