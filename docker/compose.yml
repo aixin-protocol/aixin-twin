@@ -19,7 +19,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-aixin}
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ../supabase/migrations:/docker-entrypoint-initdb.d/migrations:ro
+      # NOTE: supabase/migrations is deliberately NOT mounted into
+      # /docker-entrypoint-initdb.d — the schema references auth.users, which only
+      # exists after GoTrue has run its own migrations. scripts/aixin-up.sh applies
+      # the SQL in order once auth is ready.
+
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
@@ -87,22 +91,28 @@ services:
     environment:
       PORT: 3000
       HOST: 0.0.0.0
-      # Data plane
+      # Data plane (names must match what the app reads)
       SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
       # LLM (Ollama, Qwen/DashScope, DeepSeek — any OpenAI-compatible base URL)
       AIXIN_LLM_BASE_URL: ${AIXIN_LLM_BASE_URL:-http://ollama:11434/v1}
       AIXIN_LLM_API_KEY: ${AIXIN_LLM_API_KEY:-ollama}
       AIXIN_LLM_MODEL: ${AIXIN_LLM_MODEL:-qwen2.5:7b-instruct}
+      # Receipt signing (Ed25519 seed, hex)
+      AIXIN_SIGNING_SEED: ${AIXIN_SIGNING_SEED:-}
       # Governance / anchoring (BSC Testnet)
-      BSC_TESTNET_RPC_URL: ${BSC_TESTNET_RPC_URL}
-      BSC_ANCHOR_PRIVATE_KEY: ${BSC_ANCHOR_PRIVATE_KEY}
-      RECEIPT_SIGNING_PRIVATE_KEY: ${RECEIPT_SIGNING_PRIVATE_KEY}
-      VALIDATOR_URL: ${VALIDATOR_URL:-}
-      # Optional adapters
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID:-}
-      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET:-}
+      BSC_TESTNET_RPC_URL: ${BSC_TESTNET_RPC_URL:-}
+      BSC_TESTNET_PRIVATE_KEY: ${BSC_TESTNET_PRIVATE_KEY:-}
+      AUDIT_ANCHOR_CONTRACT_ADDRESS: ${AUDIT_ANCHOR_CONTRACT_ADDRESS:-}
+      ERC8004_IDENTITY_ADDRESS: ${ERC8004_IDENTITY_ADDRESS:-}
+      ERC8004_REPUTATION_ADDRESS: ${ERC8004_REPUTATION_ADDRESS:-}
+      ERC8004_VALIDATION_ADDRESS: ${ERC8004_VALIDATION_ADDRESS:-}
+      AIXIN_VALIDATOR_URL: ${AIXIN_VALIDATOR_URL:-}
+      # Optional adapters (Gmail needs no env: credentials live per user in the DB)
+      TELEGRAM_API_KEY: ${TELEGRAM_API_KEY:-}
+      GITHUB_API_KEY: ${GITHUB_API_KEY:-}
+
     expose:
       - "3000"
 
