@@ -160,6 +160,29 @@
 - Earning pool, staking multiplier, access bonding, burn, payouts — all non-tradeable **Ledger Preview** entries.
 - [ ] **Single simulation boundary** — one `LEDGER_PREVIEW` badge component used everywhere a token-dependent number is shown, so nothing else in the app is allowed to say "simulated".
 
+## Phase 3.6 — Platform building blocks for apps built on AiXin (BangBang first)
+> Goal: apps like **BangBang** (K–9 tutoring, China) are *built on* AiXin — their brains are
+> Digital Twins + Skills and their plumbing is platform. Anything every China-facing app needs
+> becomes a shared building block here; anything that is a product experience stays in the app.
+> Design rule: **infrastructure is shared, experience is specific.** See `BANGBANG_ON_AIXIN.md`.
+
+- [x] **Multi-tenancy** — `organizations` + `organization_members` with roles (owner / admin / teacher / parent / student), `has_org_role()` security-definer helpers and row-level isolation. BangBang's four roles are org roles, enforced in RLS rather than UI.
+- [x] **Content-safety gate (platform)** — `src/lib/content-safety.server.ts`, modes `off` / `local` / `vendor`, **fail-closed**, on the output path of every generation. Audit trail stores SHA-256 hashes only, never content. The `local` baseline is for internal testing and is explicitly labelled non-compliant.
+- [x] **Per-organisation approved model pinning** — filings name a specific model, so each tenant pins its approved model id; falls back to the env-driven self-hosted Qwen endpoint.
+- [x] **Partner API** — `POST /api/public/v1/generate` and `POST /api/public/v1/safety-check`, org-scoped key auth (`X-AiXin-Key-Id` + bearer secret, SHA-256 stored). Non-streaming by design so output is screened before it leaves the server.
+- [x] **WeChat channel adapter (platform, not BangBang-specific)** — WeChat joins Telegram / Gmail / Webhook in the adapter catalogue (`WeChat` / `channel`). Two surfaces: Mini Program **订阅消息** (`message/subscribe/send`, template-bound, fields truncated to WeChat's 20-char cap) and Official Account **客服消息** (`message/custom/send`, chunked at 1800 chars). Cached `access_token`; typed failure codes (`no_credentials` / `no_recipient` / `no_template` / `token_error` / `api_error` / `network_error`) recorded verbatim in `delivery_logs` — no simulated success. Inbound `GET|POST /api/public/wechat/webhook?app_id=…` verifies WeChat's sha1 signature *before* any database access, dedupes by `MsgId` (WeChat retries 3×), acknowledges inside WeChat's 5s window and pushes the governed reply out-of-band so latency never bypasses SIP. AppSecret + verify token never leave the server. Pure helpers unit-tested in `src/lib/wechat.test.ts` (6 tests); bilingual EN/ZH adapter card with a real "Send test" round-trip.
+- [ ] **WeChat as a delivery target for task outcomes** — route approved Specialist Twin outcomes to WeChat the way Gmail and Webhook already are (Deliver-to picker, per-task delivery banner, receipt reference).
+- [ ] **Mini Program / web client SDK** — typed client (`generate`, `safetyCheck`, task status, receipts) extracted **from** the working BangBang Mini Program rather than designed for a hypothetical second consumer. Deliberately sequenced after app #1 exists.
+- [ ] **Per-org rate limits + quota accounting** on `/api/public/v1/*` so several apps can share one deployment fairly.
+- [ ] **Org-scoped member invitations** — teacher / parent / student onboarding as a platform flow, no bespoke per-app code.
+- [ ] **Queued model serving (vLLM) + published concurrency figure** — replaces the single-process Ollama demo host; the measured concurrent-session number, not a guess, sizes the GPU purchase.
+
+**Stays app-specific (BangBang builds it, AiXin does not abstract it yet)**
+- WeChat **Mini Program UI** and parent/teacher screens — the product experience.
+- K–9 curriculum, syllabus mapping and pedagogical accuracy.
+- Youth-Mode / anti-addiction enforcement (must live in the client shell).
+- ICP / 备案 / 算法备案 / education licences — attach to the operating entity.
+
 ## Phase 4 — Core protocol: Trust Graph & Contracts (Track D)
 > Goal: turn the receipt trail into a queryable, cryptographically-verifiable trust graph
 > anchored by audited on-chain contracts. This is what makes AiXin a *protocol*, not just
