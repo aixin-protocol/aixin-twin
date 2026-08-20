@@ -183,6 +183,24 @@
 - Youth-Mode / anti-addiction enforcement (must live in the client shell).
 - ICP / 备案 / 算法备案 / education licences — attach to the operating entity.
 
+## Phase 3.7 — BangBang app build (app #1 on AiXin)
+> Goal: move BangBang from the demo mockup to a real, installable trial version that students,
+> parents, teachers and institution staff can actually use. Full specification —
+> product, architecture, AI catalogue, compliance, test plan, costs — in `BANGBANG_APP_PRD.md`.
+> Staged **P0 → P1 → P2** so a testable build exists in weeks, not quarters.
+
+- [x] **PRD (architecture + design)** — `BANGBANG_APP_PRD.md`: four-role model and permission matrix, screen inventory, 14 AI modules staged P0/P1/P2 with quality bars, data model with RLS, request path through safety + SIP, one-core/two-shell client strategy, compliance envelope (青少年模式 / 防代写 / minors' data / filings), test plan mapped 1:1 onto BangBang's four testing phases, 28-week milestone plan and $315k–$675k cost range. Mirrored to both repos.
+- [ ] **M0 Foundations** — org + roles + linking (class enrolment, verified guardianship), auth incl. role switching, shared H5 core skeleton, Mini Program + Capacitor shells building, storage buckets with org-scoped policies.
+- [ ] **M1 P0 trial build** — photo problem recognition + error analysis, all-subject grading, math practice + PDF export, error notebook, AI chat, student profile v1, Youth Mode.
+- [ ] **M2 Phase 1 hardening** — role-isolation test matrix green at the API level, device compatibility, performance budgets, bug closure to no fatal/major.
+- [ ] **M3 P1 trial build** — composition generation/polishing, English oral dialogue (ASR + scoring), emotional analysis + parent monitoring, class analytics.
+- [ ] **M4 Grayscale** — invite-only rollout to named users per role, structured feedback loop, analytics accuracy validation, compliance spot-checks.
+- [ ] **M5 P2 build** — composition animated short video, 升学路径 pathway report (SIP-governed publication), institution guidance keywords, institution backend depth.
+- [ ] **M6 Stress + regression + release lock** — concurrency targets (50 → 300 concurrent consultations, batch grading / composition / PDF), full-coverage regression, version freeze.
+- [ ] **M7 Compliance documentation** — privacy policy, user agreement, minors' clause, permission-usage descriptions, AI content declaration, evidence pack for 备案.
+
+
+
 ## Phase 4 — Core protocol: Trust Graph & Contracts (Track D)
 > Goal: turn the receipt trail into a queryable, cryptographically-verifiable trust graph
 > anchored by audited on-chain contracts. This is what makes AiXin a *protocol*, not just
