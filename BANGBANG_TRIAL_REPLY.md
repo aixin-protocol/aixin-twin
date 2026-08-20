@@ -79,6 +79,35 @@ To keep the internal-testing date honest, these are staged into P1/P2 as agreed 
 - Production-grade concurrency and HA GPU serving（sandbox is a demo host, not sized for full class-hour load 沙盒为演示主机，未做班级并发容量）
 - Licensed domestic content-safety vendor（trial runs the local baseline gate; the licensed classifier is required before real minors' data 试用期使用本地基线筛查，正式上线前须接入持牌厂商）
 
+### 3.5 When the remaining items are delivered / 未包含部分的交付时间表
+
+Taking the mid-September trial (P0) as **T0 ≈ 15 Sept 2026**:
+以 9 月中旬 P0 试用版上线为基准（T0 ≈ 2026-09-15）：
+
+| Batch 批次 | Contents 内容 | Delivery 交付时间 |
+| --- | --- | --- |
+| **T0 + 2 weeks**<br>约 9 月底 | Phase 1 defect closure (no fatal/major), device-compatibility fixes, performance budgets met, role-isolation matrix green; English oral **dialogue with basic scoring**; parent emotional-wellbeing panel **v1 (summary level)**<br>内测缺陷清零、机型兼容与性能达标、角色隔离测试全绿；英语口语对话+基础评分；家长情绪面板 v1 | Gate 1 review 一号关口评审 |
+| **T0 + 5–6 weeks**<br>约 10 月下旬 | **P1 complete**: Chinese composition generation/polishing, English oral scoring at target accuracy, full emotional-analysis + parent monitoring, class-level teacher analytics; grayscale-ready build<br>P1 全量：作文生成/润色、口语评分达标、情绪分析与家长监护、班级学情分析 | Start of grayscale 进入灰度 |
+| **T0 + 10–11 weeks**<br>约 12 月初 | **P2 complete**: composition animated short video, 升学路径 pathway report, institution guidance-keyword injection, institution backend depth<br>P2 全量：作文动画短视频、升学路径报告、机构引导关键词、机构后台完整功能 | Feature-complete 功能封版 |
+| **T0 + 13–14 weeks**<br>约 12 月底 / 1 月初 | Concurrency targets (50 → 300 concurrent consultations), HA GPU serving, full regression, release lock, compliance document pack<br>并发容量、GPU 高可用、全量回归、版本锁定、合规文档包 | Release lock 发布锁定 |
+
+**Honest answer on "everything within 2 weeks after mid-September" / 关于“9 月中旬后两周内全部完成”的坦率答复**
+
+Two weeks after T0 is realistic for **hardening plus the lighter P1 items** (row 1 above) — that is what we will commit to.
+It is **not** realistic for the whole remaining scope. Three items are irreducibly larger than two weeks:
+两周内可完成的是**内测加固 + P1 轻量功能**（上表第一行），我方承诺该范围；但**全部剩余范围**无法在两周内完成，以下三项客观上需要更长时间：
+
+1. **Composition animated short video 作文动画短视频** — video generation, per-frame + narration safety screening, async job infrastructure. 4–5 weeks of build plus quality tuning. 视频生成、逐帧与旁白安全审核、异步任务体系。
+2. **English oral scoring at target accuracy 英语口语评分达标** — needs a labelled pronunciation set and iteration against it; accuracy cannot be rushed without misleading students. 需要标注语音集与多轮调优。
+3. **Concurrency + HA serving 并发与高可用** — depends on GPU capacity procurement and queued serving; the sandbox host is not the production topology. 依赖 GPU 容量采购与排队式推理服务。
+
+Plus items **outside our control**: the licensed content-safety vendor contract, ICP·算法备案·内容安全备案 (6–12 weeks, external), Mini Program and app-store registrations.
+另有不受我方控制的外部事项：持牌内容安全厂商签约、ICP 与算法/内容安全备案（外部流程 6–12 周）、小程序与应用商店账号注册。
+
+If BangBang needs the December dates pulled earlier, the two available levers are (a) adding a second engineering pod to run P1 and P2 in parallel, or (b) dropping the composition video from the trial and shipping it as a post-launch feature. Either is workable — it is a decision for you, not a technical blocker.
+若贵方希望提前 12 月节点，可选方案：(a) 增加一个开发小组，P1 与 P2 并行；(b) 将作文动画短视频移出试用版，作为上线后功能迭代。二者均可执行，请贵方决策。
+
+
 ### 3.4 Ground rules for the trial / 试用期约定
 
 1. **No real minors' PII in the sandbox.** Test accounts and anonymised data only, until the filings and the licensed safety vendor are in place.
