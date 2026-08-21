@@ -44,7 +44,7 @@ Track 2 — 构建 Builder               (technical · half day · laptop or GPU
   M6  Dynamic tool registry + scope enforcement (W1/W2)
   M7  外部工具连接 Adapters: Telegram, Gmail, Webhook+HMAC, WeChat, BSC — and execution honesty
   M8  Run safety: step/token/time budgets, monthly cap, kill switch (W4)
-  M9  Prompt traces & replay (W6); dsh as an optional self-hosted runtime (W3)
+  M9  Prompt traces (W6, 🟡); run replay (🔵 planned); dsh as an optional self-hosted runtime (W3, 🔵)
   M10 Self-hosting in China: GPU box + Qwen/Ollama, no cross-border dependency
 
 Track 3 — 社区与投资 Community & Investor  (60 minutes · slides + 3 live moments)
@@ -228,6 +228,9 @@ marketplace pricing honest later.
 - **W6 prompt traces 🟡** — `prompt_traces` records the exact system prompt, tool names, registry
   counts and message count handed to the model. The invariant: *model-visible means logged.* This is
   what makes a run explainable after the fact instead of "the AI decided something".
+- **Run replay 🔵 planned — do NOT demo it.** Tracing is built; replaying a stored trace against the
+  model is not. Traces are the *precondition* for replay, not replay itself. Trainers must say
+  "we log everything the model saw; deterministic re-run is on the roadmap".
 - **W3 dsh bridge 🔵 planned, self-hosted only** — DeepSeek Harness runs as a Node process driving
   Cordis plugins over stdio with subprocess and filesystem access. AiXin's cloud server runs on an
   edge Worker runtime with **no subprocess and no runtime module resolution**, so cloud tenants can
@@ -339,12 +342,122 @@ A learner is certified when they can show all five:
 | Dynamic tool registry (W1) | 🟡 Aug 2026 | `src/lib/tool-registry.ts`, `tool-registry.server.ts` |
 | Skill scope enforcement (W2) | 🟡 Aug 2026 | `resolveToolInScope()` in `tool-registry.ts` |
 | Run budgets + kill switch (W4) | 🟡 Aug 2026 | `src/lib/run-budget.ts`, `RunSafetyCard.tsx` |
-| Prompt traces / replay (W6) | 🟡 Aug 2026 | `prompt_traces`, `src/routes/api/chat.ts` |
+| Prompt traces (W6) | 🟡 Aug 2026 | `prompt_traces`, `src/lib/run-budget.server.ts`, `src/routes/api/chat.ts` |
+| Deterministic run replay | 🔵 Planned | not implemented — traces only |
 | Marketplace commerce (W5) | 🔵 Planned | ROADMAP Phase 4 |
 | `dsh-bridge` runtime (W3) | 🔵 Planned, self-hosted only | `AIXIN_DSH_INTEGRATION.md` |
 
 Refresh this table at every roadmap change. **A curriculum that drifts from the product destroys
 more trust than no curriculum at all.**
+
+---
+
+## 9. Module objectives & prerequisites (the missing contract)
+
+Every module states what a learner can *do* afterwards. If the learner cannot perform the
+"can-do" column unaided, the module failed — re-teach it, do not move on.
+
+| Module | Prerequisite | After this module the learner can… | Evidence of success |
+|---|---|---|---|
+| M1 | none | explain in one sentence why AiXin is a trust layer, not a chatbot | says "it validates and receipts actions", unprompted |
+| M2 | M1 | name who orchestrates vs who executes, and why one Master Twin | draws the team box diagram from memory |
+| M3 | M2 | walk the five SIP stages in order and say where the human sits | orders 5 shuffled cards correctly |
+| M4 | M3 | hatch a twin, install a skill, approve a card, open a receipt on BscScan | a BscScan tx page on their own phone |
+| M5 | M4 | write a valid `SKILL.md` with scope, pricing, visibility, version | manifest passes `skill-manifest.ts` validation |
+| M6 | M5 | explain why the model searches tools instead of receiving all of them | states the scope-enforcement failure it prevents |
+| M7 | M6 | connect one adapter and read a delivery log | one real Telegram or Gmail delivery, logged |
+| M8 | M7 | set a budget, trip it deliberately, read the stop reason | a `run_usage` row with a non-empty stop reason |
+| M9 | M8 | read a prompt trace and state what is *not* yet built (replay) | correctly labels replay as planned |
+| M10 | M8 | describe a fully local deployment with no cross-border dependency | names model source, DB, and egress = none |
+| M11 | M1 | argue governance-as-moat against an autonomy pitch | handles two objections from §12 |
+| M12 | M11 | explain creator earnings and platform fee, and flag it as planned | never presents W5 as live |
+| M13 | M11 | describe BangBang as *built on* AiXin, not calling AiXin | uses the platform/tenant wording |
+| M14 | M11–M13 | make one of the three asks with a concrete next step | a named commitment |
+
+## 10. Formative knowledge checks (2–3 per module, ask out loud)
+
+Beginners fail silently. Ask these *mid-module*, not at the end. Correct answers in **bold**.
+
+| Module | Check | Answer |
+|---|---|---|
+| M1 | Does AiXin make the AI smarter or the AI accountable? | **accountable** |
+| M1 | If the model proposes nonsense, what stops it? | **deterministic validation, before execution** |
+| M2 | How many Master Twins per account? | **exactly one** |
+| M2 | Can a Specialist use a skill it was not assigned? | **no — scope enforcement** |
+| M3 | Who approves a high-risk action? | **a human, on a Decision Card** |
+| M3 | Is a rejection recorded? | **yes — signed, same as an approval** |
+| M4 | What proves the action happened to a stranger? | **the public verify link / on-chain receipt** |
+| M5 | Where is a skill's price and visibility declared? | **`SKILL.md` manifest** |
+| M6 | Why not hand the model every tool? | **prompt bloat + out-of-scope calls** |
+| M7 | What happens with no live adapter configured? | **the run halts as BLOCKED, it does not pretend** |
+| M8 | Which budget stops an infinite loop? | **max steps (plus tokens/wall-clock)** |
+| M9 | Can you replay a run today? | **no — traces only, replay is planned** |
+| M10 | Does a local box need cross-border access? | **no** |
+| M12 | Is marketplace payment live today? | **no — planned (W5)** |
+
+## 11. Glossary EN ↔ 中文 (use these words, never synonyms)
+
+| English | 中文 | Plain meaning |
+|---|---|---|
+| Master Twin | 主孪生 | your single orchestrator; reads intent, delegates, never executes blind |
+| Specialist Twin | 专家孪生 | a purpose-built worker twin with a limited set of skills |
+| Skill | 技能 | a capability unit declared by a `SKILL.md` manifest |
+| Adapter | 外部工具连接 | the connection to a real outside system (Telegram, Gmail, Webhook, WeChat, chain) |
+| SIP (Signal Intent Protocol) | 信号意图协议 | intent → validation → approval → execution → receipt |
+| Intent signal | 意图信号 | the strict JSON the model proposes; not an action |
+| Decision Card | 决策卡 | the human approval surface, with evidence |
+| Signed receipt | 签名回执 | Ed25519-signed record of what happened |
+| Anchor | 上链锚定 | writing the receipt hash to BSC Testnet |
+| Run budget | 运行预算 | step / token / time / monthly limits per run |
+| Kill switch | 紧急停止开关 | operator pause for all runs |
+| Prompt trace | 提示词轨迹 | the log of everything the model could see |
+| Tool registry | 工具注册表 | searchable tool catalogue given to the model |
+| Scope enforcement | 范围强制 | a twin may only invoke tools inside its assigned skills |
+
+## 12. Objection handling (scripted answers — rehearse these)
+
+| Objection | Honest answer |
+|---|---|
+| "Isn't this blockchain hype?" | The chain does one narrow job: making a receipt hash tamper-evident to a third party. Everything else — validation, approvals, execution — is ordinary server code and works without it. |
+| "Why can't the AI just do it?" | It can, and that's the problem: an unaudited agent's mistake is indistinguishable from its success. We keep the model for judgement and give the action to deterministic code. |
+| "This is slower than an autonomous agent." | For reversible actions we don't gate at all. Gating is for consequential actions, where a wrong move costs money or trust. |
+| "Can you prove it, not just claim it?" | Yes — open a receipt's public verify link on your own device, no account needed. That's the whole point of the third live demo. |
+| "What if OpenAI/DeepSeek is unavailable in my region?" | The model source is configurable; a GPU box with Qwen runs the same build locally (M10). |
+| "Do you store my data abroad?" | Self-hosted deployments have no cross-border egress requirement; see the runbooks. |
+| "Is the marketplace live?" | No. Skills, manifests and installs are live; paid commerce is planned (W5). Any trainer who says otherwise is wrong. |
+
+## 13. Demo-failure fallbacks (assume the network will fail)
+
+Three live moments are mandatory, so plan their failure explicitly.
+
+| If this fails | Do this instead | Never do this |
+|---|---|---|
+| Sandbox slow / unreachable | switch to the pre-recorded 90-second screen capture, say plainly it's a recording | claim it's live |
+| BscScan slow or blocked | show the app's own receipt panel + signature, then the public verify link; promise a follow-up link in the group chat | skip verification entirely |
+| Anchoring pending (no tx yet) | teach the pending → confirmed → failed states as a feature: failure is recorded, not hidden | refresh repeatedly in silence |
+| Adapter delivery doesn't arrive | open the delivery log and read the error out loud | blame the volunteer's phone |
+
+Trainer kit checklist: recorded fallbacks for all three demos, one pre-seeded account with an existing
+approved card + rejection + confirmed receipt, printed glossary, offline copy of this document.
+
+## 14. Did it work? Post-workshop metrics
+
+| Metric | Target per 20-person workshop | Where to read it |
+|---|---|---|
+| Learners who hatched a twin | ≥ 18 | twins created that day |
+| Learners who approved a card **and** rejected one | ≥ 15 | governance history |
+| Receipts verified by a *different* person | ≥ 10 | public verify hits |
+| Skills published (Track 2) | ≥ 5 | skills with a valid manifest |
+| Certifications issued within 2 weeks | ≥ 3 | certification artefacts |
+| Modules where >30% failed the knowledge check | 0 | trainer's tally — rewrite those modules |
+
+Review these numbers after every workshop and change the curriculum, not the audience.
+
+## 15. Where learners find this online
+
+The curriculum is published in-app at **`/learn`** (bilingual, mobile-first): module objectives,
+interactive knowledge checks with instant feedback, hands-on exercises, the glossary, the FAQ, and a
+self-serve certification checklist that tracks progress locally on the learner's device.
 
 ---
 ---
@@ -386,7 +499,7 @@ more trust than no curriculum at all.**
   M6  动态工具注册表 + 范围强制（W1/W2）
   M7  外部工具连接：Telegram、Gmail、Webhook+HMAC、微信、BSC —— 以及执行诚实性
   M8  运行安全：步数/token/时长预算、月度上限、紧急停止开关（W4）
-  M9  提示词轨迹与回放（W6）；dsh 作为可选的自托管运行时（W3）
+  M9  提示词轨迹（W6，🟡）；运行回放（🔵 规划中）；dsh 作为可选的自托管运行时（W3，🔵）
   M10 中国本地部署：GPU 机器 + Qwen/Ollama，无需跨境依赖
 
 路径三 — 社区与投资（60 分钟 · 幻灯片 + 三个现场时刻）
@@ -500,6 +613,8 @@ more trust than no curriculum at all.**
 ### M9 · 提示词轨迹、回放与 dsh 🟡 / 🔵
 - **W6 提示词轨迹 🟡** —— 记录交给模型的系统提示词、工具名、注册表规模与消息数。不变式：*模型能看到的，
   一定被记录*。这让运行事后可解释，而不是"AI 自己决定的"。
+- **运行回放 🔵 规划中 —— 请勿现场演示。** 轨迹已实现，"用轨迹重跑模型"尚未实现。轨迹是回放的前提，
+  不等于回放。讲师应表述为："模型看到的一切都被记录，确定性重跑在路线图上。"
 - **W3 dsh 桥接 🔵 规划中，仅自托管** —— dsh 是通过 stdio 驱动 Cordis 插件、需要子进程与文件系统的 Node 进程；
   AiXin 云端运行在边缘 Worker 运行时，**没有子进程、没有运行时模块解析**，云端租户根本无法获得 dsh 会话。
   正确形态是：**AiXin 是信任层与市场，dsh 是接在既有连接层后面的一种可插拔执行运行时**，用于 GPU 机器。
@@ -572,3 +687,111 @@ Ubuntu 或 Windows 11 的 GPU 机器，Qwen（Ollama）、本地数据库，无�
 
 功能 → 状态 → 实现文件，与英文版第 8 节一致；**每次路线图变更后必须刷新此表。与产品脱节的课程，
 比没有课程更伤信任。**
+
+---
+
+## 9 · 模块目标与前置条件
+
+每个模块都必须说明学员之后**能做什么**。如果学员无法独立完成"能做"一列，说明该模块失败，请重讲，
+不要继续推进。
+
+| 模块 | 前置 | 学完之后学员能… | 成功证据 |
+|---|---|---|---|
+| M1 | 无 | 用一句话解释 AiXin 是信任层而非聊天机器人 | 能主动说出"它会校验并出具回执" |
+| M2 | M1 | 指出谁编排、谁执行，以及为何只有一个主孪生 | 能凭记忆画出团队结构图 |
+| M3 | M2 | 按顺序说出 SIP 五个阶段并指出人在哪一步 | 正确排列 5 张打乱的卡片 |
+| M4 | M3 | 孵化孪生、安装技能、批准一张卡、在 BscScan 打开回执 | 自己手机上的 BscScan 交易页面 |
+| M5 | M4 | 写出含范围、定价、可见性、版本的有效 `SKILL.md` | 清单通过 `skill-manifest.ts` 校验 |
+| M6 | M5 | 解释为什么让模型"搜索"工具而不是全都给它 | 能说出它防止的越权调用 |
+| M7 | M6 | 连接一个外部工具并读取投递日志 | 一次真实的 Telegram / Gmail 投递记录 |
+| M8 | M7 | 设置预算、故意触发、读出停止原因 | `run_usage` 中带停止原因的记录 |
+| M9 | M8 | 读懂提示词轨迹，并说清哪些**还没做**（回放） | 正确把回放标为规划中 |
+| M10 | M8 | 描述完全本地部署且无跨境依赖 | 说清模型来源、数据库、出网=无 |
+| M11 | M1 | 用"治理即护城河"回应"自主性"叙事 | 能处理第 12 节两个质疑 |
+| M12 | M11 | 讲清创作者收益与平台费，并标明为规划中 | 绝不把 W5 说成已上线 |
+| M13 | M11 | 把 BangBang 描述为**构建在** AiXin 之上 | 使用平台/租户表述 |
+| M14 | M11–M13 | 提出三个邀请之一并给出具体下一步 | 有具名承诺 |
+
+## 10 · 过程性检查（每模块 2–3 题，口头提问）
+
+初学者会"安静地不懂"。请在模块**进行中**提问，不要等到最后。正确答案加粗。
+
+| 模块 | 提问 | 答案 |
+|---|---|---|
+| M1 | AiXin 让 AI 更聪明，还是更可问责？ | **更可问责** |
+| M1 | 模型胡说时，是什么拦住它？ | **执行前的确定性校验** |
+| M2 | 每个账户有几个主孪生？ | **只有一个** |
+| M2 | 专家孪生能用未指派给它的技能吗？ | **不能 —— 范围强制** |
+| M3 | 高风险动作由谁批准？ | **人，在决策卡上** |
+| M3 | 拒绝会被记录吗？ | **会 —— 同样带签名** |
+| M4 | 如何向陌生人证明动作发生过？ | **公开验证链接 / 链上回执** |
+| M5 | 技能的价格与可见性在哪里声明？ | **`SKILL.md` 清单** |
+| M6 | 为什么不把所有工具都给模型？ | **提示词膨胀 + 越权调用** |
+| M7 | 没有配置真实连接时会怎样？ | **运行以 BLOCKED 停止，不假装成功** |
+| M8 | 哪个预算能阻止死循环？ | **最大步数（以及 token / 时长）** |
+| M9 | 今天能回放一次运行吗？ | **不能 —— 只有轨迹，回放为规划中** |
+| M10 | 本地机器需要跨境访问吗？ | **不需要** |
+| M12 | 市场付费已上线了吗？ | **没有 —— 规划中（W5）** |
+
+## 11 · 术语表 中文 ↔ English（统一用词，勿用同义词）
+
+| 中文 | English | 通俗解释 |
+|---|---|---|
+| 主孪生 | Master Twin | 唯一的编排者；读意图、做分派，从不盲目执行 |
+| 专家孪生 | Specialist Twin | 技能有限、职责明确的执行孪生 |
+| 技能 | Skill | 由 `SKILL.md` 清单声明的能力单元 |
+| 外部工具连接 | Adapter | 与真实外部系统的连接（Telegram、Gmail、Webhook、微信、链） |
+| 信号意图协议 | SIP | 意图 → 校验 → 审批 → 执行 → 回执 |
+| 意图信号 | Intent signal | 模型提出的严格 JSON；它还不是动作 |
+| 决策卡 | Decision Card | 带证据的人工审批界面 |
+| 签名回执 | Signed receipt | 用 Ed25519 签名的事实记录 |
+| 上链锚定 | Anchor | 把回执哈希写到 BSC 测试网 |
+| 运行预算 | Run budget | 每次运行的步数/token/时长/月度上限 |
+| 紧急停止开关 | Kill switch | 运营方一键暂停全部运行 |
+| 提示词轨迹 | Prompt trace | 模型可见内容的完整记录 |
+| 工具注册表 | Tool registry | 交给模型的可搜索工具目录 |
+| 范围强制 | Scope enforcement | 孪生只能调用其已指派技能内的工具 |
+
+## 12 · 质疑应对（照此演练）
+
+| 质疑 | 诚实回答 |
+|---|---|
+| "这不就是区块链炒作？" | 链只做一件很窄的事：让回执哈希对第三方可验、不可篡改。校验、审批、执行都是普通服务端代码，没有链也能跑。 |
+| "为什么不让 AI 直接干？" | 可以，但问题正在这里：未经审计的智能体，出错和成功从外面看一模一样。我们让模型负责判断，把动作交给确定性代码。 |
+| "这比自主智能体慢。" | 可逆动作我们完全不设卡口；卡口只用于会花钱或损害信任的重大动作。 |
+| "能证明，而不只是宣称吗？" | 能 —— 用你自己的设备打开回执的公开验证链接，无需账号。这正是第三个现场演示的意义。 |
+| "如果本地无法访问境外模型？" | 模型来源可配置；一台 GPU 机器 + Qwen 可本地运行同一份构建（M10）。 |
+| "数据会存到境外吗？" | 自托管部署无需任何跨境出网，详见部署手册。 |
+| "市场已经上线了吗？" | 没有。技能、清单、安装已上线；付费交易为规划中（W5）。讲师若说已上线，就是讲错了。 |
+
+## 13 · 演示失败预案（默认网络会出问题）
+
+三个现场时刻是必做项，因此必须提前规划它们失败时怎么办。
+
+| 若失败 | 改为 | 绝不可 |
+|---|---|---|
+| 沙盒慢或打不开 | 播放事先录好的 90 秒录屏，并明确说明是录屏 | 声称是现场 |
+| BscScan 慢或被阻断 | 先展示应用内回执面板与签名，再给公开验证链接，会后在群里补链接 | 完全跳过验证 |
+| 锚定仍在 pending | 把 pending → confirmed → failed 当作特性讲：失败也会被记录，不会被隐藏 | 沉默地反复刷新 |
+| 外部投递没送达 | 打开投递日志，把错误读出来 | 归咎于志愿者的手机 |
+
+讲师工具包清单：三个演示的录屏备份、一个预置账户（含已批准卡、一次拒绝、一条已确认回执）、
+打印版术语表、本文件的离线副本。
+
+## 14 · 有效性度量（每场 20 人）
+
+| 指标 | 目标 | 在哪里看 |
+|---|---|---|
+| 孵化了孪生的学员 | ≥ 18 | 当日创建的孪生 |
+| 既批准过、也拒绝过的学员 | ≥ 15 | 治理历史 |
+| 被**他人**验证过的回执 | ≥ 10 | 公开验证访问 |
+| 发布的技能（路径二） | ≥ 5 | 带有效清单的技能 |
+| 两周内颁发的认证 | ≥ 3 | 认证作品 |
+| 检查题失败率 >30% 的模块 | 0 | 讲师统计 —— 重写这些模块 |
+
+每场之后复盘这些数字，并修改课程，而不是抱怨学员。
+
+## 15 · 学员在线学习入口
+
+课程已在应用内发布于 **`/learn`**（中英双语、移动优先）：模块目标、带即时反馈的互动检查题、
+动手练习、术语表、常见质疑问答，以及在本机记录进度的自助认证清单。
