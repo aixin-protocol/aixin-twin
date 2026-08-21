@@ -221,15 +221,19 @@
 - [ ] **Trust Graph explorer UI** at `spec.aixin.io/graph` — search by agent DID, receipt hash, or validator; renders the provenance chain with BscScan links at every edge.
 - [ ] Reference client: `@aixin-protocol/graph-client` (JS + Python) so integrators can query the graph in three lines.
 
-**Agent framework hardening (borrowed from DeepSeek Harness — see [`AIXIN_DSH_INTEGRATION.md`](./AIXIN_DSH_INTEGRATION.md)):**
-- [ ] **Dynamic per-agent tool registry** — replace the fixed Zod `tool()` literal in `src/routes/api/chat.ts` with a registry assembled per request from the caller's installed Skills + connected Adapters. Prerequisite for Skill-contributed tools.
-- [ ] **SIP interceptor seam** — move SIP validation from inside individual tool bodies to a uniform pre-execute hook over the tool loop, so a new tool cannot structurally skip governance.
+**Agent framework hardening — pre-launch workstreams W1–W6 (borrowed from DeepSeek Harness — see [`AIXIN_DSH_INTEGRATION.md`](./AIXIN_DSH_INTEGRATION.md)):**
+- [x] **W1 — Dynamic per-agent tool registry** — the fixed Zod `tool()` literal in `src/routes/api/chat.ts` is replaced by a per-request registry assembled from the caller's installed Skills (`src/lib/tool-registry.ts` + `tool-registry.server.ts`), exposed to the model through `tool_search` / `tool_invoke` meta-tools so context stays small as the catalogue grows.
+- [x] **W2 — Skill scope enforcement** — a Skill is only callable when it is installed **and** assigned to a Specialist Twin; unassigned or uninstalled skills fail closed with a machine-readable reason instead of being silently invented. Surfaced in Organisation → Run safety.
+- [x] **W4 — Spend & loop safety** — `run_budgets` / `run_usage` tables plus `src/lib/run-budget.ts` (pure rules) enforce per-run step, token and wall-clock ceilings, a monthly token cap, and a hard kill switch; every run records steps/tokens/duration/stop reason.
+- [x] **W6 — Prompt traces (replayability)** — `prompt_traces` records the exact system prompt, tool names, registry counts and message count given to the model per run ("model-visible means logged").
+- [x] **SIP interceptor seam** — SIP validation lives in one shared `delegation.server.ts` path used by both chat and every dynamic skill tool, so a new tool cannot structurally skip governance.
+- [ ] **W5 — Marketplace commerce** — paid Skill/Twin bundles: checkout, entitlements, publisher payouts, metered usage billing off `run_usage`.
+- [ ] **W3 — `dsh-bridge` service (opt-in, self-hosted only)** — thin HMAC-authenticated HTTP service on the GPU box that owns a `DeepSeekHarness` subprocess over stdio JSON-RPC; `POST /run` + SSE event mirror. Operator-installed Cordis profiles only — never wire-supplied plugin lists.
 - [ ] **`session.event` → `task_events` mapping prototype** — field-level spike before any bridge work; unresolved today.
-- [ ] **`dsh-bridge` service (opt-in, self-hosted only)** — thin HMAC-authenticated HTTP service on the GPU box that owns a `DeepSeekHarness` subprocess over stdio JSON-RPC; `POST /run` + SSE event mirror. Operator-installed Cordis profiles only — never wire-supplied plugin lists.
 - [ ] **Adapter `provider=dsh`** — dsh as an execution runtime behind the existing adapter seam. SIP stays upstream; dsh approval policy = deny; `execution-capability.ts` still blocks when no dsh adapter is connected.
-- [ ] **Specialist Twins as dsh sessions** — one session per Specialist, tool scope derived from assigned Skills, turning "assigned skills" from display metadata into enforced scope.
-- [ ] **Log-derived prompt assembly** ("model-visible means logged") — prompts derived from the durable trace so traces are provably complete.
+- [ ] **Specialist Twins as dsh sessions** — one session per Specialist, scope derived from the W2 registry.
 - [ ] Explicitly out of scope: rebuilding AiXin on dsh (edge Worker runtime cannot host it), and dsh on the BangBang trial critical path.
+
 
 **Spec work:**
 - [ ] AIP-3: Anchoring fee & validator staking economics
