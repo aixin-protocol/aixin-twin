@@ -274,3 +274,5 @@ Ordered by dependency — do 1–6 before recording anything:
 7. Record demo tx + earnings screenshots.
 8. Cut `v0.1.0`, publish GHCR image.
 9. Refresh investor deck + run-of-show.
+
+- Phase 4: Track 4 (Build & monetise) published in the Academy — capability matrix, twin templates, OPC ROI/monetisation, /learn/capabilities, /learn/templates, /learn/roi.
