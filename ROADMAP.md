@@ -233,6 +233,8 @@
 - [ ] **Adapter `provider=dsh`** — dsh as an execution runtime behind the existing adapter seam. SIP stays upstream; dsh approval policy = deny; `execution-capability.ts` still blocks when no dsh adapter is connected.
 - [ ] **Specialist Twins as dsh sessions** — one session per Specialist, scope derived from the W2 registry.
 - [ ] Explicitly out of scope: rebuilding AiXin on dsh (edge Worker runtime cannot host it), and dsh on the BangBang trial critical path.
+- [x] **Education models & curriculum (China)** — [`AIXIN_EDUCATION.md`](./AIXIN_EDUCATION.md): three bilingual learning tracks (Foundation / Builder / Community & Investor), 14 modules, hands-on labs, the AiXin vs dsh vs OpenClaw vs Hermes comparison table, and a trainer verification table pinned to the Aug/Sep 2026 delivery calendar. Refresh the status table on every roadmap change.
+
 
 
 **Spec work:**
