@@ -1,0 +1,574 @@
+# AiXin Education Models & Curriculum (China)
+### 信心 AiXin 教育模型与课程体系（中国）
+
+**Version:** 1.0 · **Date:** 21 August 2026 · **Owner:** AiXin Protocol
+**Audience:** community members (非技术), builders (技术), investors & partners (投资人/合作伙伴)
+
+This document defines *how we teach AiXin in China* — the learning tracks, module content, hands-on
+labs, diagrams and comparison tables — and pins every claim to the real delivery calendar so no
+trainer, community lead or partner over-promises.
+
+---
+
+## 0. Truth calendar — what a module is allowed to promise
+
+Everything taught here is tagged with one of three status labels. Trainers must read the label aloud.
+
+| Label | Meaning | Where a learner can see it |
+|---|---|---|
+| 🟢 **Live** | Shipped and verifiable today | Live sandbox + BscScan |
+| 🟡 **Sandbox by 31 Aug 2026** | Landing in the live sandbox this month | Sandbox build |
+| 🔵 **Planned (by mid-Sep 2026 or later)** | Designed, on the roadmap, not built | ROADMAP.md only |
+
+| Window | Platform state | Curriculum may teach as… |
+|---|---|---|
+| Now → **31 Aug 2026** | Remaining Phase 3.5 items + enhancement workstreams **W1 / W2 / W4 / W6** live in the sandbox | 🟡 Sandbox — demo it, label it sandbox |
+| **1 → 15 Sep 2026** | Fixes + second enhancement pass; BangBang trial goes live | 🟡 → 🟢 as items are verified |
+| After mid-Sep 2026 | **W5** marketplace commerce, **W3** self-hosted `dsh` runtime | 🔵 Planned — roadmap slide only, never a demo |
+
+> Rule for every trainer: **if you cannot open a URL and show it, it is 🔵 Planned.**
+
+---
+
+## 1. The three learning tracks
+
+```text
+Track 1 — 入门 Foundation            (non-technical · 90 minutes · phone only)
+  M1  What AiXin is: a trust layer, not another chatbot
+  M2  Master Twin + Specialist Twins: the team model
+  M3  The SIP pipeline: intent → validation → Decision Card → signed receipt → BSC
+  M4  LAB: hatch a twin, install a skill, approve one card, open the receipt on BscScan
+
+Track 2 — 构建 Builder               (technical · half day · laptop or GPU box)
+  M5  Skills and SKILL.md manifests: public/private, free/paid, dev/live, versions
+  M6  Dynamic tool registry + scope enforcement (W1/W2)
+  M7  外部工具连接 Adapters: Telegram, Gmail, Webhook+HMAC, WeChat, BSC — and execution honesty
+  M8  Run safety: step/token/time budgets, monthly cap, kill switch (W4)
+  M9  Prompt traces & replay (W6); dsh as an optional self-hosted runtime (W3)
+  M10 Self-hosting in China: GPU box + Qwen/Ollama, no cross-border dependency
+
+Track 3 — 社区与投资 Community & Investor  (60 minutes · slides + 3 live moments)
+  M11 Why governance is the moat
+  M12 Marketplace economics: Twin Bundles, creator earnings, platform fee
+  M13 Case study: BangBang built on AiXin
+  M14 The ask: contribute a skill, run a box, or invest
+```
+
+Recommended sequence for a new city/community: **Track 1 → (2 weeks) → Track 2 → Track 3 for the
+subset who want to build a business on it.** Track 3 can also run standalone for investors.
+
+---
+
+## 2. The one-picture model (used in every track)
+
+```mermaid
+flowchart TD
+  U["👤 User / 用户"] -->|"intent 意图"| MT["Master Twin (AiXin)<br/>主孪生 — orchestrates"]
+  MT -->|"A2A delegation 委派"| S1["Specialist Twin<br/>专家孪生 · Finance"]
+  MT --> S2["Specialist Twin<br/>专家孪生 · Marketing"]
+  S1 --> SK1["Skill 技能<br/>SKILL.md manifest"]
+  S2 --> SK2["Skill 技能"]
+  SK1 --> AD["外部工具连接 Adapters<br/>Telegram · Gmail · Webhook · WeChat · BSC"]
+  SK2 --> AD
+  AD --> W["🌍 Real world 真实世界"]
+  MT -.->|"every consequential action 每个重要动作"| SIP["SIP governance kernel<br/>治理内核"]
+  S1 -.-> SIP
+  S2 -.-> SIP
+```
+
+**Say it in one sentence (非技术版):** *AiXin gives you one digital twin that acts as your chief of
+staff, hires specialist twins for specific jobs, and — this is the point — **cannot do anything
+consequential without leaving a signed, publicly checkable receipt.***
+
+---
+
+## 3. Track 1 — 入门 Foundation (90 minutes)
+
+### M1 · What AiXin is (15 min)
+
+| Common belief | What AiXin actually is |
+|---|---|
+| "Another ChatGPT" | A **governance layer** that sits between an AI's intent and the real world |
+| "It automates my work" | It automates work **and proves what it did**, to someone who trusts neither the model nor us |
+| "Trust the AI" | **Don't** trust the AI. Trust the receipt. |
+
+Three questions the module must leave answered:
+1. Who decides? — **You do**, through a Decision Card.
+2. What if the AI is wrong? — Deterministic validation blocks it *before* execution.
+3. How do I prove it later? — Ed25519-signed receipt, hash anchored to BSC Testnet, public verify URL.
+
+### M2 · Master Twin + Specialist Twins (20 min)
+
+| Concept | Plain language | In the product |
+|---|---|---|
+| Master Twin 主孪生 | Your chief of staff. Named **AiXin** by default. One per account. | `/onboarding`, `/dashboard` |
+| Specialist Twin 专家孪生 | A hired expert with a narrow job (finance, marketing, ops) | `/dashboard/specialists` |
+| Skill 技能 | A capability you install onto a specialist — described by a `SKILL.md` manifest | `/dashboard/skills` |
+| 外部工具连接 Adapter | The wire to the outside world (email, Telegram, WeChat, webhook, chain) | `/dashboard/adapters` |
+| Delegation 委派 | Master hands a task to a specialist, with scope | Task detail thread |
+
+Teaching trick that works: draw a company org chart. Master Twin = CEO's chief of staff.
+Specialists = department heads. Skills = the tools on their desk. Adapters = the phone line out of
+the building. SIP = the compliance officer who signs off before anything leaves.
+
+### M3 · The SIP pipeline (25 min)
+
+```mermaid
+flowchart LR
+  A["1 · LLM intent<br/>模型意图"] --> B["2 · Deterministic validation<br/>确定性校验 · SIP rules"]
+  B -->|"fails 违规"| R["🚫 BLOCKED<br/>signed rejection 签名拒绝"]
+  B --> C{"3 · Risk tier<br/>风险等级"}
+  C -->|"low"| E
+  C -->|"medium / high"| D["4 · Decision Card<br/>决策卡 · human approval 人工审批"]
+  D -->|"reject 拒绝"| R
+  D -->|"approve 批准"| E["5 · Execution<br/>执行"]
+  E -->|"no live adapter"| NB["🚫 BLOCKED<br/>no_live_adapter · draft only 仅草稿"]
+  E -->|"budget exhausted"| BB["🚫 HALTED<br/>step/token/time budget"]
+  E --> F["6 · Ed25519 receipt<br/>签名回执"]
+  F --> G["7 · Anchor to BSC Testnet<br/>上链存证 · BscScan"]
+  R --> F
+```
+
+**The four teaching moments in this diagram** (these are what make people believe):
+1. A **rejection is signed too** — refusing is an auditable act, not silence.
+2. **No live adapter → BLOCKED**, and you get a clearly-labelled draft. AiXin never pretends it sent
+   something it did not send. (`src/lib/execution-capability.ts`)
+3. **Budget exhausted → HALTED with a reason**, never a silent stop. (`src/lib/run-budget.ts`)
+4. Approving *against* a recommendation asks you for an **override rationale**, which is also signed.
+
+### M4 · LAB (30 min, phone only, no VPN)
+
+| Step | Learner does | Learner sees | Route |
+|---|---|---|---|
+| 1 | Sign in, hatch Master Twin | Twin named AiXin, ERC-8004 identity registered | `/onboarding` |
+| 2 | Type a real intent in plain Chinese | Plan with filled slots, not a fabrication | `/dashboard/ask` |
+| 3 | Install one free skill, assign to a specialist | Consent screen + `SKILL.md` manifest | `/dashboard/skills` |
+| 4 | Approve one Decision Card | Evidence panel with real data, not vibes | `/dashboard/ask` |
+| 5 | Reject a second card with a reason | Signed rejection in Governance | `/dashboard/governance` |
+| 6 | Open the receipt on BscScan | Transaction hash, anyone can verify | `/verify/:sipId` |
+
+**Completion criterion:** the learner can hand their phone to a stranger and the stranger can verify
+the receipt without an AiXin account.
+
+---
+
+## 4. Track 2 — 构建 Builder (half day)
+
+### M5 · Skills & manifests 🟢
+
+A Skill is not a prompt. It is a declared capability with a manifest:
+
+| Manifest field | Why it matters |
+|---|---|
+| name / category / description | Discovery in the marketplace |
+| adapter (外部工具连接) | Which wire it needs; no adapter → execution is blocked, not faked |
+| rules | Feeds the derived **capability contract**: SIP action, risk tier, approval requirement |
+| visibility public/private · price free/paid · status dev/live · version | Lifecycle and marketplace |
+
+Derived automatically by `src/lib/skill-manifest.ts` → `deriveCapabilityContract()`.
+
+### M6 · Dynamic tool registry + scope enforcement (W1/W2) 🟡 *by 31 Aug 2026*
+
+**Before vs after** — the single most important slide for technical audiences:
+
+```text
+BEFORE (fixed catalogue)
+  request ─▶ hardcoded tool list in chat.ts ─▶ model
+            (installing a Skill changed NOTHING the twin could do — it was display metadata)
+
+AFTER  (W1 + W2)
+  request ─▶ installed Skills ∩ assignments to Specialists
+            ─▶ per-request registry of scoped tool descriptors   (src/lib/tool-registry.ts)
+            ─▶ exposed via tool_search / tool_invoke meta-tools   (src/routes/api/chat.ts)
+            ─▶ model sees a small, relevant catalogue that grows without blowing up context
+  unassigned or uninstalled skill ─▶ FAIL CLOSED with a machine-readable reason
+                                     ("unknown_tool" | "not_in_scope") — never a silent success
+```
+
+| Rule | Code |
+|---|---|
+| An install alone grants nothing — assignment to a Specialist is required | `buildSkillToolDescriptors()` |
+| A tool call outside scope is a *blocked event*, not an error message the model can talk around | `resolveToolInScope()` |
+| Large catalogues stay cheap via search-then-invoke | `searchDescriptors()` |
+| SIP cannot be skipped by a new tool — one shared validation path | `src/lib/delegation.server.ts` |
+
+### M7 · Adapters and execution honesty 🟢
+
+| Adapter | Transport | Governance note |
+|---|---|---|
+| Telegram | Bot API, per-user token | Two-way task thread with the Master Twin |
+| Gmail | OAuth | Real delivery; delivery logged per task |
+| Webhook | HTTPS + **HMAC-SHA256** signature | The generic escape hatch for enterprises |
+| WeChat 微信 | Official Account / Mini Program webhook | The China channel; BangBang uses it |
+| BSC | JSON-RPC | Anchoring + ERC-8004 identity |
+
+Everything lands in `delivery_logs`, visible on both `/dashboard/adapters` and the task detail page.
+**Teaching point:** observability is not a nice-to-have — "did it actually send?" is the question
+that destroys trust in every other agent product.
+
+### M8 · Run safety (W4) 🟡 *by 31 Aug 2026*
+
+| Guard | Default | Behaviour when hit |
+|---|---|---|
+| Steps per run | 25 | HALTED · `max_steps` |
+| Tokens per run | 120,000 | HALTED · `max_tokens` |
+| Wall clock per run | 180 s | HALTED · `max_wall_clock` |
+| Tokens per month (workspace) | 5,000,000 | Pre-flight refusal · `monthly_cap` |
+| Kill switch (operator pause) | off | Pre-flight refusal · `paused` |
+
+Surfaced in **Organisation → Run safety** (`RunSafetyCard.tsx`), every run writing steps / tokens /
+duration / stop reason to `run_usage`. Rules are pure and unit-tested (`src/lib/run-budget.ts`,
+`run-budget.test.ts`) so a trainer can show the tests as proof.
+
+**Why builders care:** a runaway loop is a financial event. This is also the meter that makes
+marketplace pricing honest later.
+
+### M9 · Prompt traces, replay, and dsh 🟡 / 🔵
+
+- **W6 prompt traces 🟡** — `prompt_traces` records the exact system prompt, tool names, registry
+  counts and message count handed to the model. The invariant: *model-visible means logged.* This is
+  what makes a run explainable after the fact instead of "the AI decided something".
+- **W3 dsh bridge 🔵 planned, self-hosted only** — DeepSeek Harness runs as a Node process driving
+  Cordis plugins over stdio with subprocess and filesystem access. AiXin's cloud server runs on an
+  edge Worker runtime with **no subprocess and no runtime module resolution**, so cloud tenants can
+  never get a dsh session. Correct shape: **AiXin is the trust layer and the marketplace; dsh is one
+  pluggable execution runtime behind the existing adapter seam**, available on GPU boxes.
+  SIP stays upstream and authoritative; dsh's own approval channel is set to *deny*.
+  Details: [`AIXIN_DSH_INTEGRATION.md`](./AIXIN_DSH_INTEGRATION.md), [`AIXIN_VS_DSH.md`](./AIXIN_VS_DSH.md).
+
+### M10 · Self-hosting in China 🟢
+
+Ubuntu or Windows 11 GPU box, Qwen via Ollama, local database, no cross-border egress required.
+Runbooks: [`SELF_HOSTING.md`](./SELF_HOSTING.md) and [`DEPLOY_RUNBOOK.md`](./DEPLOY_RUNBOOK.md).
+`src/lib/ai-gateway.server.ts` resolves the chat model from environment, so the same build runs
+hosted or fully local with a pinned model id.
+
+---
+
+## 5. AiXin vs other agent systems (the technical comparison slide)
+
+| Dimension | **AiXin** | DeepSeek Harness (dsh) | OpenClaw-style autonomous agent | Hermes-style local assistant |
+|---|---|---|---|---|
+| What it is | Trust layer + marketplace + governed runtime | A harness: loop + tools + session + UIs | An autonomous tool-using loop | A local model wrapper / assistant |
+| Agent loop | `streamText` with step cap + budget guard | Cordis plugin waterfall, highly composable | Free-running until done | Single-turn or shallow loop |
+| Tool registry | **Dynamic, per-request, scope-enforced** (W1/W2) | Dynamic via plugins | Static config file | Static |
+| Approval | **Decision Cards; approval is the product**; rejections signed; override rationale captured | Fail-closed approval plugin (in-process) | Usually none, or a yes/no prompt | None |
+| Audit trail | `task_events` + Ed25519 receipts + **BSC anchor** | In-process session log | Console output | None |
+| Third-party verifiable | ✅ anyone can verify without trusting us | ❌ trust the operator's log | ❌ | ❌ |
+| Execution honesty | Blocks with `no_live_adapter`; emits a labelled draft | N/A (real subprocess access) | Will happily claim success | N/A |
+| Spend / loop safety | Steps + tokens + wall clock + monthly cap + kill switch | Operator-configured | Typically none | N/A |
+| Multi-agent | Master Twin → Specialist Twins (A2A, scoped) | Experimental agent teams | Sub-agents ad hoc | No |
+| Runtime | Edge Worker (cloud) or self-hosted GPU box | Node process, subprocess/filesystem | Node/Python host | Local desktop |
+| Marketplace | Skills + Twin Bundles, versions, pricing | None | None | None |
+| Maturity / licence | Production sandbox, testnet-anchored | MIT, developer preview | Varies, hobby→prod | Varies |
+
+**The honest one-liner:** dsh optimises for *runtime composability*, with approval as one good
+plugin. AiXin optimises for *third-party-verifiable governance*, where approval **is** the product.
+An OpenClaw-style agent optimises for autonomy — which is exactly why it will happily issue the same
+refund twice, and why our head-to-head demo uses precisely that trap.
+
+---
+
+## 6. Track 3 — 社区与投资 (60 minutes)
+
+### M11 · Why governance is the moat
+
+Model capability is commoditising monthly. What does not commoditise is a record a bank, a regulator,
+a school, or a counterparty will accept. AiXin's defensibility is the **receipt trail plus the trust
+graph built on top of it** (Phase 4), not any single model.
+
+### M12 · Marketplace economics 🔵 *planned, W5*
+
+| Role | Gives | Gets |
+|---|---|---|
+| Skill creator 技能创作者 | A live skill with a manifest | Revenue share on installs/usage |
+| Twin bundler | A packaged Specialist + skills ("Twin Bundle") | Flat-price bundle sales |
+| Operator (GPU box) | Self-hosted capacity in-region | Runs paid workloads locally |
+| Platform | Governance, verification, distribution | Platform fee |
+
+Sequencing that keeps us honest: **W4 metering ships first, pricing second.** We instrument real
+token cost per loop before selling a flat subscription, otherwise pricing is blind.
+
+### M13 · Case study — BangBang built on AiXin
+
+An education app for students/parents/teachers, delivered through the WeChat channel, built **on**
+AiXin rather than calling it: photo recognition, maths practice, AI tutoring, all under content
+safety screening and the same SIP receipts. Trial target: **mid-September 2026**.
+See [`BANGBANG_ON_AIXIN.md`](./BANGBANG_ON_AIXIN.md), [`BANGBANG_APP_PRD.md`](./BANGBANG_APP_PRD.md).
+
+### M14 · The three live demo moments (never use slides for these)
+
+1. **A rejection that produces a signed receipt.** Refusal is auditable.
+2. **A blocked run: "no live adapter".** The system refuses to pretend. Nothing else on the market
+   does this in front of an audience.
+3. **A kill-switch / budget halt.** Money safety is visible, not promised.
+
+---
+
+## 7. Delivery formats
+
+| Format | Track | Duration | Requirements | Notes |
+|---|---|---|---|---|
+| Community workshop 社区工作坊 | 1 | 90 min | Phone only, no VPN | WeChat-group friendly; 20–50 people |
+| Builder bootcamp 开发者训练营 | 2 | Half day | Laptop; optional GPU box with Qwen | Works fully offline on a self-hosted box |
+| Investor briefing 投资人简报 | 3 | 60 min | 15 slides + live sandbox | Three live moments are mandatory |
+| Partner deep-dive | 2+3 | 3 hours | Sandbox tenant | For app teams like BangBang |
+
+### Certification — "AiXin Skill Creator 技能创作者"
+
+A learner is certified when they can show all five:
+
+1. One live Skill with a valid `SKILL.md` manifest.
+2. That skill installed **and assigned** to a Specialist Twin (proves they understand scope).
+3. One approved Decision Card with a real evidence panel.
+4. One signed **rejection** (proves they understand the governance point, not just the happy path).
+5. One receipt verified on BscScan by someone else, via the public verify URL.
+
+---
+
+## 8. Trainer's verification table (feature → status → source of truth)
+
+| Feature taught | Status | Implementation |
+|---|---|---|
+| SIP validation, risk tiering, signed rejections | 🟢 Live | `src/lib/sip.server.ts`, `src/lib/sip.functions.ts` |
+| Ed25519 receipts + BSC anchoring + public verify | 🟢 Live | `receipt-signer.server.ts`, `anchor.server.ts`, `/verify/:sipId` |
+| ERC-8004 twin identity | 🟢 Live | `src/lib/identity.server.ts` |
+| Execution honesty (`no_live_adapter`) | 🟢 Live | `src/lib/execution-capability.ts` |
+| Adapters + delivery logs | 🟢 Live | `execution.server.ts`, `delivery-log.server.ts` |
+| Skill lifecycle + manifests | 🟢 Live | `src/lib/skill-manifest.ts`, `/dashboard/skills` |
+| Dynamic tool registry (W1) | 🟡 Aug 2026 | `src/lib/tool-registry.ts`, `tool-registry.server.ts` |
+| Skill scope enforcement (W2) | 🟡 Aug 2026 | `resolveToolInScope()` in `tool-registry.ts` |
+| Run budgets + kill switch (W4) | 🟡 Aug 2026 | `src/lib/run-budget.ts`, `RunSafetyCard.tsx` |
+| Prompt traces / replay (W6) | 🟡 Aug 2026 | `prompt_traces`, `src/routes/api/chat.ts` |
+| Marketplace commerce (W5) | 🔵 Planned | ROADMAP Phase 4 |
+| `dsh-bridge` runtime (W3) | 🔵 Planned, self-hosted only | `AIXIN_DSH_INTEGRATION.md` |
+
+Refresh this table at every roadmap change. **A curriculum that drifts from the product destroys
+more trust than no curriculum at all.**
+
+---
+---
+
+# 中文版 · AiXin 教育模型与课程体系
+
+**版本：** 1.0 · **日期：** 2026 年 8 月 21 日 · **对象：** 社区成员（非技术）、开发者（技术）、投资人与合作伙伴
+
+本文件定义 **AiXin 在中国如何被教学** —— 学习路径、模块内容、动手实验、图表与对比表，并把每一项主张
+与真实的交付日历绑定，确保讲师、社区负责人与合作伙伴都不会过度承诺。
+
+## 0 · 真实性日历 —— 每个模块可以承诺什么
+
+| 标签 | 含义 | 学员在哪里能看到 |
+|---|---|---|
+| 🟢 **已上线** | 今天即可验证 | 线上沙盒 + BscScan |
+| 🟡 **2026 年 8 月 31 日前进入沙盒** | 本月落地 | 沙盒版本 |
+| 🔵 **规划中（2026 年 9 月中或之后）** | 已设计、在路线图上、尚未构建 | 仅 ROADMAP.md |
+
+| 时间窗口 | 平台状态 | 课程可以如何讲 |
+|---|---|---|
+| 现在 → **2026-08-31** | 剩余 Phase 3.5 项目 + 增强工作流 **W1 / W2 / W4 / W6** 进入线上沙盒 | 🟡 沙盒 —— 可演示，但必须标明沙盒 |
+| **2026-09-01 → 09-15** | 修复与第二轮增强；BangBang 试用版上线 | 逐项由 🟡 转 🟢 |
+| 2026 年 9 月中之后 | **W5** 市场商业化、**W3** 自托管 `dsh` 运行时 | 🔵 规划中 —— 只能出现在路线图页，绝不演示 |
+
+> 讲师铁律：**打不开链接、当场演示不了的，一律算 🔵 规划中。**
+
+## 1 · 三条学习路径
+
+```text
+路径一 — 入门（非技术 · 90 分钟 · 只需手机）
+  M1  AiXin 是什么：信任层，而不是又一个聊天机器人
+  M2  主孪生 + 专家孪生：团队模型
+  M3  SIP 治理流水线：意图 → 校验 → 决策卡 → 签名回执 → 上链
+  M4  实验：孵化孪生、安装技能、批准一张决策卡、在 BscScan 上打开回执
+
+路径二 — 构建（技术 · 半天 · 笔记本或 GPU 机器）
+  M5  技能与 SKILL.md 清单：公开/私有、免费/付费、开发/上线、版本
+  M6  动态工具注册表 + 范围强制（W1/W2）
+  M7  外部工具连接：Telegram、Gmail、Webhook+HMAC、微信、BSC —— 以及执行诚实性
+  M8  运行安全：步数/token/时长预算、月度上限、紧急停止开关（W4）
+  M9  提示词轨迹与回放（W6）；dsh 作为可选的自托管运行时（W3）
+  M10 中国本地部署：GPU 机器 + Qwen/Ollama，无需跨境依赖
+
+路径三 — 社区与投资（60 分钟 · 幻灯片 + 三个现场时刻）
+  M11 为什么治理才是护城河
+  M12 市场经济模型：Twin 套装、创作者收益、平台费
+  M13 案例：BangBang 构建在 AiXin 之上
+  M14 邀请：贡献技能、运行一台机器、或参与投资
+```
+
+新城市/新社区建议顺序：**路径一 →（两周后）路径二 → 对想以此创业的人开设路径三。** 路径三也可独立面向投资人。
+
+## 2 · 一张图讲清模型
+
+**一句话（非技术版）：** *AiXin 给你一个数字孪生作为"办公室主任"，它会为具体工作雇用专家孪生；关键在于
+—— **任何有后果的动作，都必须留下一张可被公开核验的签名回执，否则做不了。***
+
+（图示同英文版：用户 → 主孪生 → 专家孪生 → 技能 → 外部工具连接 → 真实世界，SIP 治理内核横切所有环节。）
+
+## 3 · 路径一 · 入门（90 分钟）
+
+### M1 · AiXin 是什么（15 分钟）
+
+| 常见误解 | AiXin 实际是什么 |
+|---|---|
+| "又一个 ChatGPT" | 位于 AI 意图与真实世界之间的**治理层** |
+| "它帮我自动化工作" | 它自动化工作，**并且证明它做了什么** —— 证明给既不信任模型、也不信任我们的人看 |
+| "要相信 AI" | **不要**相信 AI。相信回执。 |
+
+三个必须讲清的问题：谁做决定？——**你**，通过决策卡。AI 错了怎么办？——确定性校验在执行**之前**拦截。
+事后如何举证？——Ed25519 签名回执 + BSC 测试网存证 + 公开验证链接。
+
+### M2 · 主孪生与专家孪生（20 分钟）
+
+| 概念 | 通俗说法 | 产品位置 |
+|---|---|---|
+| 主孪生 | 你的办公室主任，默认名为 **AiXin**，每账户一个 | `/onboarding`、`/dashboard` |
+| 专家孪生 | 被雇来做某一类具体工作的专家（财务、市场、运营） | `/dashboard/specialists` |
+| 技能 | 安装到专家孪生上的能力，由 `SKILL.md` 清单描述 | `/dashboard/skills` |
+| 外部工具连接 | 通往外部世界的线路（邮件、Telegram、微信、Webhook、链上） | `/dashboard/adapters` |
+| 委派 | 主孪生把任务连同权限范围交给专家孪生 | 任务详情对话 |
+
+好用的教学类比：画一张公司组织架构图。主孪生＝办公室主任，专家孪生＝部门负责人，技能＝他们桌上的工具，
+外部工具连接＝对外的电话线，SIP＝在任何东西发出去之前签字的合规官。
+
+### M3 · SIP 治理流水线（25 分钟）
+
+流程：模型意图 → 确定性校验（违规则**签名拒绝**）→ 风险分级 → 中高风险进入**决策卡**人工审批 →
+执行（无可用连接则 `no_live_adapter` 拦截并只产出标注清楚的草稿；预算耗尽则 HALTED）→ Ed25519 签名回执
+→ BSC 测试网存证。
+
+四个最能建立信任的教学点：
+1. **拒绝也会被签名** —— 拒绝是可审计的行为，而不是沉默。
+2. **没有可用连接就拦截**，并明确给出"草稿，未执行"。AiXin 绝不假装自己发出了实际没有发出的东西。
+3. **预算耗尽会带原因停止**，绝不静默中断。
+4. 在系统建议拒绝时仍选择批准，会要求你填写**覆盖理由**，该理由同样被签名。
+
+### M4 · 实验（30 分钟 · 只用手机 · 无需 VPN）
+
+| 步骤 | 学员操作 | 学员看到 | 路由 |
+|---|---|---|---|
+| 1 | 登录并孵化主孪生 | 名为 AiXin 的孪生，ERC-8004 身份已注册 | `/onboarding` |
+| 2 | 用中文输入一个真实意图 | 带有已填写要素的计划，而非编造 | `/dashboard/ask` |
+| 3 | 安装一个免费技能并指派给专家孪生 | 授权确认页与 `SKILL.md` 清单 | `/dashboard/skills` |
+| 4 | 批准一张决策卡 | 基于真实数据的证据面板 | `/dashboard/ask` |
+| 5 | 带理由拒绝第二张卡 | 治理页中的签名拒绝记录 | `/dashboard/governance` |
+| 6 | 在 BscScan 打开回执 | 交易哈希，任何人可核验 | `/verify/:sipId` |
+
+**通过标准：** 学员把手机递给一个陌生人，对方无需 AiXin 账号即可核验这张回执。
+
+## 4 · 路径二 · 构建（半天）
+
+### M5 · 技能与清单 🟢
+技能不是一段提示词，而是一份声明式能力清单：名称/类别/描述（用于市场发现）、外部工具连接（缺失即拦截而
+非伪造）、规则（推导出 SIP 动作、风险等级、是否需要审批）、可见性与价格与状态与版本（生命周期与市场）。
+
+### M6 · 动态工具注册表与范围强制（W1/W2）🟡 *8 月 31 日前*
+
+**改造前：** 工具清单硬编码在 `chat.ts` 里，安装一个技能**什么也不会改变** —— 那只是展示用的元数据。
+**改造后：** 按请求实时构建注册表＝（已安装技能 ∩ 已指派给专家孪生的技能），通过 `tool_search` /
+`tool_invoke` 元工具暴露给模型，目录再大也不会撑爆上下文；未安装或未指派的技能一律**失败关闭**并给出
+机器可读原因（`unknown_tool` / `not_in_scope`），绝不静默成功。SIP 校验集中在一条共享路径上，新工具在结构上
+无法绕过治理。
+
+### M7 · 外部工具连接与执行诚实性 🟢
+
+| 连接 | 传输 | 治理要点 |
+|---|---|---|
+| Telegram | Bot API，每用户独立令牌 | 与主孪生的双向任务对话 |
+| Gmail | OAuth | 真实投递，按任务记录投递日志 |
+| Webhook | HTTPS + **HMAC-SHA256** 签名 | 面向企业的通用出口 |
+| 微信 | 公众号 / 小程序 webhook | 中国渠道，BangBang 即基于此 |
+| BSC | JSON-RPC | 存证与 ERC-8004 身份 |
+
+全部写入 `delivery_logs`，在外部工具连接页与任务详情页均可见。**教学要点：** 可观测性不是加分项 ——
+"到底发出去没有？"这个问题，足以摧毁市面上其他所有智能体产品的可信度。
+
+### M8 · 运行安全（W4）🟡 *8 月 31 日前*
+
+| 守卫 | 默认值 | 触发后行为 |
+|---|---|---|
+| 单次运行步数 | 25 | 停止 · `max_steps` |
+| 单次运行 token | 120,000 | 停止 · `max_tokens` |
+| 单次运行时长 | 180 秒 | 停止 · `max_wall_clock` |
+| 每月 token（工作区） | 5,000,000 | 运行前拒绝 · `monthly_cap` |
+| 紧急停止开关 | 关闭 | 运行前拒绝 · `paused` |
+
+在**组织 → 运行安全**中呈现，每次运行都会把步数/token/时长/停止原因写入 `run_usage`。规则为纯函数并有
+单元测试，讲师可以直接把测试当作证据展示。**开发者关心的原因：** 失控循环是一次财务事故；同时这套计量
+也是后续市场定价诚实的基础。
+
+### M9 · 提示词轨迹、回放与 dsh 🟡 / 🔵
+- **W6 提示词轨迹 🟡** —— 记录交给模型的系统提示词、工具名、注册表规模与消息数。不变式：*模型能看到的，
+  一定被记录*。这让运行事后可解释，而不是"AI 自己决定的"。
+- **W3 dsh 桥接 🔵 规划中，仅自托管** —— dsh 是通过 stdio 驱动 Cordis 插件、需要子进程与文件系统的 Node 进程；
+  AiXin 云端运行在边缘 Worker 运行时，**没有子进程、没有运行时模块解析**，云端租户根本无法获得 dsh 会话。
+  正确形态是：**AiXin 是信任层与市场，dsh 是接在既有连接层后面的一种可插拔执行运行时**，用于 GPU 机器。
+  SIP 始终在上游且具有最终权威，dsh 自身的审批通道设置为拒绝。
+
+### M10 · 中国本地部署 🟢
+Ubuntu 或 Windows 11 的 GPU 机器，Qwen（Ollama）、本地数据库，无需跨境访问。同一份构建既可托管运行也可
+完全本地运行，模型 id 可固定。
+
+## 5 · AiXin 与其他智能体系统对比
+
+| 维度 | **AiXin** | DeepSeek Harness (dsh) | OpenClaw 式自主智能体 | Hermes 式本地助手 |
+|---|---|---|---|---|
+| 本质 | 信任层 + 市场 + 受治理运行时 | harness：循环 + 工具 + 会话 + 界面 | 自主的工具调用循环 | 本地模型封装 |
+| 循环 | 带步数上限与预算守卫 | Cordis 插件瀑布，组合性强 | 跑到自认为完成为止 | 单轮或浅循环 |
+| 工具注册 | **按请求动态、强制范围**（W1/W2） | 插件动态注册 | 静态配置文件 | 静态 |
+| 审批 | **决策卡；审批本身就是产品**；拒绝被签名；覆盖理由被记录 | 失败关闭的审批插件（进程内） | 通常没有，或只有一次是/否 | 无 |
+| 审计轨迹 | 事件流 + Ed25519 回执 + **BSC 存证** | 进程内会话日志 | 控制台输出 | 无 |
+| 第三方可核验 | ✅ 无需信任我们即可核验 | ❌ 需信任运营方日志 | ❌ | ❌ |
+| 执行诚实性 | 无连接即拦截，产出标注草稿 | 不适用（有真实子进程） | 会直接宣称成功 | 不适用 |
+| 花费/循环安全 | 步数 + token + 时长 + 月度上限 + 紧急停止 | 由运营方配置 | 基本没有 | 不适用 |
+| 多智能体 | 主孪生 → 专家孪生（A2A、带范围） | 实验性 agent teams | 临时子智能体 | 无 |
+| 运行时 | 边缘 Worker（云）或自托管 GPU 机器 | Node 进程，需子进程/文件系统 | Node/Python 主机 | 本地桌面 |
+| 市场 | 技能 + Twin 套装、版本、定价 | 无 | 无 | 无 |
+| 成熟度/许可 | 生产沙盒，测试网存证 | MIT，开发者预览 | 从爱好到生产不等 | 不等 |
+
+**诚实的一句话总结：** dsh 优化的是**运行时可组合性**，审批只是其中一个好插件；AiXin 优化的是
+**可被第三方核验的治理**，审批**就是**产品本身。OpenClaw 式智能体优化的是自主性 —— 这正是它会心安理得地
+把同一笔退款打两次的原因，也正是我们的对比演示专门设置这个陷阱的原因。
+
+## 6 · 路径三 · 社区与投资（60 分钟）
+
+**M11 · 为什么治理是护城河** —— 模型能力每月都在商品化，不会被商品化的是银行、监管机构、学校或交易对手
+愿意采信的记录。AiXin 的壁垒是**回执链条以及建立其上的信任图谱**（Phase 4），而不是任何单一模型。
+
+**M12 · 市场经济模型 🔵 规划中（W5）**
+
+| 角色 | 付出 | 获得 |
+|---|---|---|
+| 技能创作者 | 一个带清单的上线技能 | 安装/使用分成 |
+| Twin 套装打包者 | 打包好的专家孪生 + 技能 | 套装销售收入 |
+| 机器运营者 | 本地区自托管算力 | 在本地运行付费任务 |
+| 平台 | 治理、核验、分发 | 平台费 |
+
+保持诚实的次序：**先有 W4 计量，再谈定价。** 在真实测出每次循环的 token 成本之前就卖统一订阅，等于盲定价。
+
+**M13 · 案例：BangBang 构建在 AiXin 之上** —— 面向学生/家长/教师的教育应用，通过微信渠道交付：拍照识题、
+数学练习、AI 辅导，全部经过内容安全筛查并产生同一套 SIP 回执。试用目标：**2026 年 9 月中**。
+
+**M14 · 三个必须现场演示的时刻（不要用幻灯片替代）**
+1. **一次产生签名回执的拒绝** —— 拒绝是可审计的。
+2. **一次"无可用连接"的拦截** —— 系统拒绝假装。市面上没有第二个产品敢当众演示这个。
+3. **一次紧急停止 / 预算拦截** —— 资金安全是看得见的，不是承诺出来的。
+
+## 7 · 交付形式
+
+| 形式 | 路径 | 时长 | 条件 | 备注 |
+|---|---|---|---|---|
+| 社区工作坊 | 一 | 90 分钟 | 只需手机，无需 VPN | 适合微信群组织，20–50 人 |
+| 开发者训练营 | 二 | 半天 | 笔记本；可选 Qwen GPU 机器 | 自托管环境下可完全离线 |
+| 投资人简报 | 三 | 60 分钟 | 15 页 + 线上沙盒 | 三个现场时刻为必选 |
+| 合作伙伴深度会 | 二+三 | 3 小时 | 沙盒租户 | 面向 BangBang 这类应用团队 |
+
+### 认证 —— "AiXin 技能创作者"
+需同时展示五项：① 一个带有效 `SKILL.md` 清单的上线技能；② 该技能已安装**并已指派**给专家孪生（证明理解
+范围机制）；③ 一张带真实证据面板的已批准决策卡；④ 一次签名拒绝（证明理解治理要点，而不只是顺利路径）；
+⑤ 一张由**他人**通过公开验证链接在 BscScan 上核验成功的回执。
+
+## 8 · 讲师核验表
+
+功能 → 状态 → 实现文件，与英文版第 8 节一致；**每次路线图变更后必须刷新此表。与产品脱节的课程，
+比没有课程更伤信任。**
