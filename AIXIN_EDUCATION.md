@@ -795,3 +795,89 @@ Ubuntu 或 Windows 11 的 GPU 机器，Qwen（Ollama）、本地数据库，无�
 
 课程已在应用内发布于 **`/learn`**（中英双语、移动优先）：模块目标、带即时反馈的互动检查题、
 动手练习、术语表、常见质疑问答，以及在本机记录进度的自助认证清单。
+
+---
+
+## 16. Track 4 — Build & monetise 构建与变现 (added Aug 2026)
+
+Published in-app at `/learn` (Track 4), `/learn/capabilities`, `/learn/templates`, `/learn/roi`.
+
+| Module | Title | Status |
+|---|---|---|
+| M15 | What your twins can and cannot do — the honest capability matrix | 🟢 |
+| M16 | Create your first twin in 30 minutes — one worked example end to end | 🟢 |
+| M17 | The OPC time-and-money map — what to delegate first, with payback math | 🟢 |
+| M18 | Ten ways a twin is monetised — templates, pricing models, who pays | 🟢 |
+| M19 | Best practices and anti-patterns | 🟢 |
+| M20 | Why AiXin, commercially — vs OpenClaw / Hermes / dsh | 🟢 |
+
+### 16.1 Capability boundary
+
+**Can:** read intent and emit a strict intent signal (`src/lib/sip.server.ts`); delegate Master → Specialist (`src/lib/delegation.server.ts`); search and invoke in-scope tools 🟡 (`src/lib/tool-registry.ts`); execute through Gmail / Telegram / signed webhook / WeChat / BSC (`src/lib/execution.server.ts`); draft for human send; pause on an evidence-rich Decision Card (`src/lib/refund-evidence.server.ts`); sign and anchor every outcome including rejections (`src/lib/receipt-signer.server.ts`); record prompt traces 🟡; run on a self-hosted local model (`src/lib/ai-gateway.server.ts`).
+
+**Cannot (refuses by design):** execute with no live adapter — halts `blocked / no_live_adapter`, output labelled "draft — not executed" (`src/lib/execution-capability.ts`); move money without an approved Decision Card; use an unassigned skill (scope enforcement); run unbounded (`src/lib/run-budget.ts`); browse the open web; replay a run deterministically 🔵 (W6); sell itself in-app 🔵 (W5).
+
+### 16.2 Monetisation models (say "monetised", not "make money")
+
+| Model | Who pays | Needs | Status |
+|---|---|---|---|
+| Cost avoided | your own business, in hours | one live adapter + a recurring task | 🟢 |
+| One-off build fee | a client wanting handover | published skill + one real run + receipt | 🟢 |
+| Subscription / retainer | a client paying monthly | reliable recurring delivery + delivery logs | 🟢 |
+| Usage-based | variable-volume client | metered runs (run usage rows) | 🟡 |
+| Marketplace bundle | marketplace buyers | in-app payments, entitlements, payouts | 🔵 W5 |
+
+### 16.3 Twin templates (each with buyer, tutorial, Decision Card contents, receipt meaning, honest limits)
+
+Daily briefing 🟢 · Refund/goodwill desk 🟢 · Inbox triage & reply drafter 🟢 (draft-only) · Client reporting 🟢 · Lead qualifier 🟢 (HMAC webhook) · Paid marketplace bundle 🔵 · Self-hosted Qwen box 🔵. Data: `src/lib/twin-templates.ts`; capability/ROI/monetisation data: `src/lib/twin-economics.ts`.
+
+### 16.4 OPC payback formula
+
+`payback = (hours saved × hourly rate) − (run cost + amortised build time)`. Live-today candidates ranked by hours back: inbox triage 8–15 h/mo, lead qualification 6–12, refund desk 5–10 (plus prevented duplicate payouts), client reporting 4–8 per client, morning briefing 3–6, price monitoring 2–4. Booking travel / paying invoices / publishing posts: do not delegate yet.
+
+### 16.5 Certification
+
+New optional artefact: a skill shipped from a twin template with a named buyer and price. Passing all Track 4 modules plus that artefact earns the **Build & monetise** endorsement; the base AiXin Skill Creator certification still requires the original five artefacts.
+
+---
+
+## 16 · 路径四 · 构建与变现（2026 年 8 月新增）
+
+应用内入口：`/learn`（路径四）、`/learn/capabilities`、`/learn/templates`、`/learn/roi`。
+
+| 模块 | 标题 | 状态 |
+|---|---|---|
+| M15 | 孪生能做什么、不能做什么 —— 诚实能力清单 | 🟢 |
+| M16 | 30 分钟创建你的第一个孪生 —— 完整示例 | 🟢 |
+| M17 | 一人公司的时间与成本地图 —— 先委派什么、怎么算回本 | 🟢 |
+| M18 | 孪生变现的十种方式 —— 模板、定价模式、谁付钱 | 🟢 |
+| M19 | 最佳实践与反模式 | 🟢 |
+| M20 | 从商业角度：为什么选 AiXin（对比 OpenClaw / Hermes / dsh） | 🟢 |
+
+### 16.1 能力边界
+
+**可以：** 读懂意图并生成严格意图信号；主孪生向专家孪生分派；搜索并调用范围内工具 🟡；通过 Gmail / Telegram / 签名 Webhook / 微信 / BSC 执行；起草供人发送；带真实证据在决策卡上暂停；为每个结果（含拒绝）签名并上链锚定；记录提示词轨迹 🟡；在自托管本地模型上运行。
+
+**不可以（按设计拒绝）：** 没有实时外部工具连接时执行 —— 以 `blocked / no_live_adapter` 中止，产出标记「草稿 —— 未执行」；没有已批准决策卡时动钱；使用未指派技能；无上限运行；随意浏览开放互联网；确定性回放 🔵（W6）；在应用内自我售卖 🔵（W5）。
+
+### 16.2 变现模式（请说「变现」，不要说「赚钱」）
+
+| 模式 | 谁付钱 | 前提 | 状态 |
+|---|---|---|---|
+| 节省成本 | 你自己的业务（用省下的工时） | 一个已上线连接 + 一项重复任务 | 🟢 |
+| 一次性搭建费 | 希望搭好后交付的客户 | 已发布技能 + 一次真实运行 + 回执 | 🟢 |
+| 订阅 / 服务费 | 按月付费的客户 | 稳定的周期性交付 + 投递日志 | 🟢 |
+| 按用量 | 用量波动的客户 | 计量运行（运行用量记录） | 🟡 |
+| 市场捆绑包 | 市场买家 | 应用内支付、权益、结算 | 🔵 W5 |
+
+### 16.3 孪生模板
+
+每日简报 🟢 · 退款与善意补偿 🟢 · 收件箱分级与回复起草 🟢（仅草稿）· 客户报告 🟢 · 线索甄别 🟢（HMAC Webhook）· 付费市场捆绑包 🔵 · 自托管 Qwen 机器 🔵。每个模板都含买家画像、教程步骤、决策卡应显示内容、回执证明什么、诚实边界。
+
+### 16.4 一人公司回本公式
+
+`回本 =（省下小时数 × 小时成本）−（运行成本 + 摊销搭建时间）`。已上线任务按回报排序：收件箱分级 8–15 小时/月、线索甄别 6–12、退款台 5–10（另避免重复付款）、客户报告 4–8（每客户）、早间简报 3–6、价格监控 2–4。预订出行 / 支付账单 / 发布内容：暂不委派。
+
+### 16.5 认证
+
+新增选做作品：基于孪生模板交付的技能，并写明买家与价格。通过路径四全部模块并完成该作品，可获得「构建与变现」加签；基础「AiXin 技能创作者」认证仍要求原有五件作品。
