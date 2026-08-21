@@ -30,7 +30,7 @@ Everything taught here is tagged with one of three status labels. Trainers must 
 
 ---
 
-## 1. The three learning tracks
+## 1. The four learning tracks
 
 ```text
 Track 1 — 入门 Foundation            (non-technical · 90 minutes · phone only)
@@ -52,10 +52,20 @@ Track 3 — 社区与投资 Community & Investor  (60 minutes · slides + 3 live
   M12 Marketplace economics: Twin Bundles, creator earnings, platform fee
   M13 Case study: BangBang built on AiXin
   M14 The ask: contribute a skill, run a box, or invest
+
+Track 4 — 构建与变现 Build & monetise       (practical · 2 hours · laptop)
+  M15 What twins can and cannot do: the honest capability matrix
+  M16 Create your first twin in 30 minutes: a worked example
+  M17 The OPC time-and-money map: what to delegate first and payback math
+  M18 How twins are monetised: templates, pricing models, and buyers
+  M19 Twin best practices and anti-patterns
+  M20 Why AiXin commercially: vs OpenClaw, Hermes, and dsh
 ```
 
-Recommended sequence for a new city/community: **Track 1 → (2 weeks) → Track 2 → Track 3 for the
-subset who want to build a business on it.** Track 3 can also run standalone for investors.
+Recommended sequence for a new city/community: **Track 1 → (2 weeks) → Track 2 → Track 4 for
+operators and builders → Track 3 for community leaders and investors.** Tracks 3 and 4 can also run
+standalone. Full bilingual M15–M20 content, templates, capability boundaries, ROI and certification
+are in **§16** and in the Academy at `/learn`.
 
 ---
 
@@ -373,6 +383,12 @@ Every module states what a learner can *do* afterwards. If the learner cannot pe
 | M12 | M11 | explain creator earnings and platform fee, and flag it as planned | never presents W5 as live |
 | M13 | M11 | describe BangBang as *built on* AiXin, not calling AiXin | uses the platform/tenant wording |
 | M14 | M11–M13 | make one of the three asks with a concrete next step | a named commitment |
+| M15 | M4 | distinguish what a live twin can, cannot, and refuses to do | correctly classifies five capability scenarios |
+| M16 | M15 | create and test one scoped twin from a template | one real run, Decision Card, and receipt |
+| M17 | M16 | rank OPC tasks by value and calculate payback | completed ROI worksheet with stated assumptions |
+| M18 | M17 | choose a buyer, offer, and honest pricing model | one-page offer with live/planned dependencies labelled |
+| M19 | M16 | apply scope, evidence, approval, observability, and budget best practices | passes the anti-pattern review exercise |
+| M20 | M15 | explain when AiXin, OpenClaw, Hermes, or dsh is the right fit | comparison justified by governance and runtime needs |
 
 ## 10. Formative knowledge checks (2–3 per module, ask out loud)
 
@@ -394,6 +410,12 @@ Beginners fail silently. Ask these *mid-module*, not at the end. Correct answers
 | M9 | Can you replay a run today? | **no — traces only, replay is planned** |
 | M10 | Does a local box need cross-border access? | **no** |
 | M12 | Is marketplace payment live today? | **no — planned (W5)** |
+| M15 | Can a twin execute without a live adapter? | **no — it blocks and labels the output as a draft** |
+| M16 | What proves the tutorial twin completed a real action? | **delivery evidence plus a signed receipt** |
+| M17 | What must an ROI claim include? | **hours saved, hourly value, run cost, and build-time assumptions** |
+| M18 | Is marketplace bundle payment live? | **no — W5 is planned; service and build-fee models can be used today** |
+| M19 | Should a specialist receive every available skill? | **no — grant the minimum scoped skills required** |
+| M20 | Is dsh a replacement for SIP? | **no — it is a planned optional execution runtime behind AiXin governance** |
 
 ## 11. Glossary EN ↔ 中文 (use these words, never synonyms)
 
@@ -485,7 +507,7 @@ self-serve certification checklist that tracks progress locally on the learner's
 
 > 讲师铁律：**打不开链接、当场演示不了的，一律算 🔵 规划中。**
 
-## 1 · 三条学习路径
+## 1 · 四条学习路径
 
 ```text
 路径一 — 入门（非技术 · 90 分钟 · 只需手机）
@@ -507,9 +529,18 @@ self-serve certification checklist that tracks progress locally on the learner's
   M12 市场经济模型：Twin 套装、创作者收益、平台费
   M13 案例：BangBang 构建在 AiXin 之上
   M14 邀请：贡献技能、运行一台机器、或参与投资
+
+路径四 — 构建与变现（实操 · 2 小时 · 笔记本）
+  M15 孪生能做什么、不能做什么：诚实能力清单
+  M16 30 分钟创建第一个孪生：完整示例
+  M17 一人公司的时间与成本地图：先委派什么、如何计算回本
+  M18 孪生如何变现：模板、定价模式与买家
+  M19 孪生最佳实践与反模式
+  M20 商业上为什么选择 AiXin：对比 OpenClaw、Hermes 与 dsh
 ```
 
-新城市/新社区建议顺序：**路径一 →（两周后）路径二 → 对想以此创业的人开设路径三。** 路径三也可独立面向投资人。
+新城市/新社区建议顺序：**路径一 →（两周后）路径二 → 面向经营者和开发者的路径四 → 面向社区负责人和投资人的路径三。**
+路径三和路径四也可独立开设。M15–M20 的完整双语内容、模板、能力边界、ROI 与认证见**第 16 节**及应用内 `/learn`。
 
 ## 2 · 一张图讲清模型
 
@@ -711,6 +742,12 @@ Ubuntu 或 Windows 11 的 GPU 机器，Qwen（Ollama）、本地数据库，无�
 | M12 | M11 | 讲清创作者收益与平台费，并标明为规划中 | 绝不把 W5 说成已上线 |
 | M13 | M11 | 把 BangBang 描述为**构建在** AiXin 之上 | 使用平台/租户表述 |
 | M14 | M11–M13 | 提出三个邀请之一并给出具体下一步 | 有具名承诺 |
+| M15 | M4 | 区分已上线孪生可以、不能以及按设计拒绝做的事 | 正确判断五个能力场景 |
+| M16 | M15 | 从模板创建并测试一个带范围的孪生 | 一次真实运行、决策卡与回执 |
+| M17 | M16 | 按价值排列一人公司任务并计算回本 | 完成一份写明假设的 ROI 表 |
+| M18 | M17 | 选择买家、服务与诚实定价模式 | 一页服务方案，并标明已上线/规划中依赖 |
+| M19 | M16 | 应用范围、证据、审批、可观测性与预算最佳实践 | 通过反模式审查练习 |
+| M20 | M15 | 解释何时适合 AiXin、OpenClaw、Hermes 或 dsh | 根据治理与运行时需求给出理由 |
 
 ## 10 · 过程性检查（每模块 2–3 题，口头提问）
 
@@ -732,6 +769,12 @@ Ubuntu 或 Windows 11 的 GPU 机器，Qwen（Ollama）、本地数据库，无�
 | M9 | 今天能回放一次运行吗？ | **不能 —— 只有轨迹，回放为规划中** |
 | M10 | 本地机器需要跨境访问吗？ | **不需要** |
 | M12 | 市场付费已上线了吗？ | **没有 —— 规划中（W5）** |
+| M15 | 没有实时外部工具连接时，孪生能执行吗？ | **不能 —— 会拦截并把结果标为草稿** |
+| M16 | 什么能证明教程孪生真的完成了动作？ | **投递证据与签名回执** |
+| M17 | ROI 主张必须包含什么？ | **节省工时、小时价值、运行成本与搭建时间假设** |
+| M18 | 市场捆绑包支付已上线吗？ | **没有 —— W5 仍在规划；当前可采用服务费或搭建费** |
+| M19 | 专家孪生应该获得全部可用技能吗？ | **不应该 —— 只授予完成任务所需的最小范围** |
+| M20 | dsh 会替代 SIP 吗？ | **不会 —— 它是规划中的可选执行运行时，仍受 AiXin 治理** |
 
 ## 11 · 术语表 中文 ↔ English（统一用词，勿用同义词）
 
