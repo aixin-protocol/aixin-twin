@@ -65,7 +65,8 @@ Track 4 — 构建与变现 Build & monetise       (practical · 2 hours · lapt
 Recommended sequence for a new city/community: **Track 1 → (2 weeks) → Track 2 → Track 4 for
 operators and builders → Track 3 for community leaders and investors.** Tracks 3 and 4 can also run
 standalone. Full bilingual M15–M20 content, templates, capability boundaries, ROI and certification
-are in **§16** and in the Academy at `/learn`.
+are in **§16**, a click-by-click sign-up-to-receipt walkthrough is in **§17**, and both live in the
+Academy at `/learn`.
 
 ---
 
@@ -924,3 +925,102 @@ New optional artefact: a skill shipped from a twin template with a named buyer a
 ### 16.5 认证
 
 新增选做作品：基于孪生模板交付的技能，并写明买家与价格。通过路径四全部模块并完成该作品，可获得「构建与变现」加签；基础「AiXin 技能创作者」认证仍要求原有五件作品。
+
+---
+
+## 17 · The complete journey: from sign-up to a verified receipt（English）
+### 完整旅程：从注册到一张可验证的回执 —— 给所有水平学习者的实操教程
+
+*Requested by Dr. Aima for community-leader training. Every step below is traced against the live code (Aug 2026) — no step describes a feature that does not exist. Non-technical readers: follow the "You do" lines. Technical readers: the "Behind the scenes" lines name the real tables and modules.*
+
+*应艾玛博士要求编写，用于社区领袖培训。以下每一步都对齐了当前真实代码（2026 年 8 月）—— 没有任何一步描述尚不存在的功能。非技术读者看「你做什么」即可；技术读者看「幕后发生了什么」，里面有真实的表名与模块名。*
+
+**Time needed / 所需时间：** about 30 minutes the first time / 第一次约 30 分钟 · **Prerequisite / 前置：** an email address and a phone or laptop / 一个邮箱，加一部手机或电脑
+
+### 17.1 The journey on one page / 一页看懂全程
+
+```mermaid
+flowchart TD
+    A["1. Sign up · /auth"] --> B["2. Hatch Master Twin · /onboarding"]
+    B --> C["3. Create Specialist · /dashboard/specialists"]
+    C --> D["4. Install Skill + consent · /dashboard/skills"]
+    D --> E["5. Assign skill to Specialist"]
+    E --> F["6. Connect and test adapter · /dashboard/adapters"]
+    F --> G["7. Delegate intent · /dashboard/ask"]
+    G --> H{"SIP validation · 6 deterministic rules"}
+    H -->|low risk| I["9. Auto-execute"]
+    H -->|medium / high risk| J["8. Decision Card"]
+    J -->|approve / reject + reason| K["Sign Ed25519 receipt + anchor BSC Testnet"]
+    K --> I
+    I --> M["Outcome + delivery logs"]
+    M --> N["10. Anyone verifies · /verify/sip_id"]
+```
+
+### 17.2 The ten steps / 十个步骤
+
+**Step 1 — Create your account / 注册账号** · Screen 页面: `/auth`
+- **You do 你做什么：** Enter your email and a password, then click the confirmation link in the email. 输入邮箱和密码，然后点开确认邮件里的链接。
+- **Behind the scenes 幕后：** The auth service creates your user record. On first sign-in the app checks whether you already have a Master Twin — you don't yet — and sends you to onboarding. (Google / WeChat buttons are placeholders, not live yet.) 认证服务创建你的用户记录。首次登录时系统检查你是否已有主孪生 —— 还没有 —— 于是把你带去孵化流程。（Google / 微信按钮目前只是占位，尚未上线。）
+
+**Step 2 — Hatch your Master Twin / 孵化你的主孪生** · Screen 页面: `/onboarding`
+- **You do 你做什么：** Three small steps: give your twin a name (default: AiXin), pick your expertise areas, review, press **Hatch**. 三个小步骤：给孪生起名（默认叫 AiXin）、选择你的专长领域、确认、点「孵化」。
+- **Behind the scenes 幕后：** One row is written to `master_twins` (reputation 0, verified actions 0, status active). The platform then registers an **ERC-8004 on-chain identity** for your twin on BSC Testnet, e.g. `yourname.master.aixin.agent`. If the chain is slow, hatching still succeeds — identity registration retries in the background and never blocks you. 系统向 `master_twins` 写入一条记录（声誉 0、已验证动作 0、状态活跃），随后为孪生在 BSC 测试链上注册 ERC-8004 链上身份。即使链上网络较慢，孵化也会成功 —— 身份注册会在后台重试，绝不阻塞你。
+
+**Step 3 — Create a Specialist Twin / 创建专家孪生** · Screen 页面: `/dashboard/specialists`
+- **You do 你做什么：** Click **New specialist** and pick a preset (Marco · Nova · Ledger · Iris) or define your own role. 点「新建专家」，选一个预设（Marco · Nova · Ledger · Iris）或自定义角色。
+- **Behind the scenes 幕后：** Each specialist is its own row in `specialist_twins` **with its own ERC-8004 identity** — your team members are individually accountable on-chain, not anonymous subprocesses. 每个专家都是 `specialist_twins` 里的独立记录，并拥有自己的 ERC-8004 身份 —— 你的团队成员在链上各自可问责，而不是匿名的子进程。
+
+**Step 4 — Install a skill (with informed consent) / 安装技能（知情同意）** · Screen 页面: `/dashboard/skills` → open a skill
+- **You do 你做什么：** Open a skill, read the consent dialog — it shows the capability contract **before** you accept: the SIP action, risk level, whether your approval is required, and the permissions. Click **Accept**. 打开一个技能，阅读同意弹窗 —— 在你接受之前就能看到能力契约：SIP 动作、风险等级、是否需要你审批、以及所需权限。点「接受」。
+- **Behind the scenes 幕后：** The contract is **derived deterministically from the skill manifest** (`skill-manifest.ts`), not from an AI's mood — a buyer sees the same contract every time. Installing writes one `skill_installs` row. 契约由技能清单（`skill-manifest.ts`）确定性地推导，而非 AI 临场判断 —— 每个人看到的契约都一样。安装会写入一条 `skill_installs` 记录。
+
+**Step 5 — Assign the skill to your Specialist / 把技能指派给专家** · Same screen 同一页面
+- **You do 你做什么：** In "Assigned to", pick your specialist from the dropdown. 在「指派给」下拉里选择你的专家。
+- **Behind the scenes 幕后：** One `skill_assignments` row. This is **scope enforcement**: a specialist can only invoke tools inside skills explicitly assigned to it — it cannot improvise access. 写入一条 `skill_assignments` 记录。这就是「范围强制」：专家只能调用明确指派给它的技能内的工具，不能擅自越权。
+
+**Step 6 — Connect and test one adapter / 连接并测试一个外部工具** · Screen 页面: `/dashboard/adapters`
+- **You do 你做什么：** Connect what the skill needs — Gmail (OAuth), Telegram (your bot token), a signed webhook, or BSC — and press **Test**. 按技能需要连接 Gmail（OAuth）、Telegram（你的机器人令牌）、签名 Webhook 或 BSC，然后点「测试」。
+- **Behind the scenes 幕后：** This is AiXin's honesty guarantee: if no live adapter exists for an action, execution **halts as `blocked / no_live_adapter`** and the output is labelled "draft — not executed". AiXin never simulates success. 这是 AiXin 的诚实保证：如果某个动作没有实时连接，执行会以 `blocked / no_live_adapter` 中止，产出标注「草稿 —— 未执行」。AiXin 绝不假装成功。
+
+**Step 7 — Delegate a task / 委派任务** · Screen 页面: `/dashboard/ask`
+- **You do 你做什么：** Type your intent in plain words — "Give me a daily BTC briefing and email it to me" or "Review a refund for customer Rose". If something is missing (an amount, an email), the twin asks. Then it shows you a plan. 用大白话输入你的意图 ——「给我一份 BTC 每日简报并发到我邮箱」或「帮我审核客户 Rose 的退款」。缺什么（金额、邮箱）孪生会追问，然后给你看执行计划。
+- **Behind the scenes 幕后：** Before any model runs, a **budget preflight** checks your monthly token cap and kill switch (over budget → the run is refused, honestly). Your prompt is recorded as a trace. Then a `tasks` row is created and **SIP validation** runs — six deterministic rules, no AI involved: known action, sane amount, valid currency, clean parameters, no smuggled fields. Result: a risk level — low / medium / high. 在模型运行前，先做预算预检（月度 token 上限与紧急停止开关；超预算就诚实地拒绝运行），并把这次提示记录为追踪。然后创建 `tasks` 记录并运行 SIP 校验 —— 六条确定性规则，不经过 AI：动作已知、金额合理、币种合法、参数干净、没有夹带字段。输出一个风险等级：低 / 中 / 高。
+
+**Step 8 — Decide on the Decision Card / 在决策卡上做决定** · Screen 页面: inline on Ask / Governance 治理页
+- **You do 你做什么：** Low-risk tasks execute automatically. Everything else waits for you on a **Decision Card** showing the evidence and the platform's recommendation. Press **Approve** or **Reject** — a reason is recorded either way. If you approve against a "reject" recommendation, you are asked for a one-line override rationale. 低风险任务自动执行；其余都会停在一张决策卡上等你 —— 卡上有证据和平台建议。点「批准」或「拒绝」—— 无论哪种都会记录理由。如果你在「建议拒绝」的情况下仍批准，系统会请你写一句覆盖理由。
+- **Behind the scenes 幕后：** Your decision payload is **signed with Ed25519**, its hash **anchored to BSC Testnet** (a real transaction; if the chain is unreachable it is honestly labelled `simulated` or `failed` and retried every 15 minutes — never a fake hash). ERC-8004 feedback is written for the specialist, a `receipts` row is stored, and reputation moves slightly (+0.01 approve / −0.01 reject). 你的决定内容会被 Ed25519 签名，哈希锚定到 BSC 测试链（真实交易；链不可达时会诚实标注 `simulated` / `failed`，每 15 分钟自动重试 —— 绝不伪造哈希）。同时写入专家的 ERC-8004 反馈、保存 `receipts` 记录、声誉微调（批准 +0.01 / 拒绝 −0.01）。
+
+**Step 9 — Watch execution / 观看执行** · Screen 页面: the task view 任务视图
+- **You do 你做什么：** Watch the live event log: each phase appears as it happens — validation, decision, execution, delivery. 看着实时事件流：校验、决策、执行、投递，每个阶段逐一出现。
+- **Behind the scenes 幕后：** Execution only runs real tool paths — the shared refund ledger, live CoinGecko data for briefings, deterministic stats for forecasts, Gmail delivery, signed HMAC webhooks — and every delivery attempt is written to `delivery_logs`. The outcome is stored; the task closes as `done` or `blocked`. 执行只走真实的工具路径 —— 共享退款台账、CoinGecko 实时行情、确定性统计预测、Gmail 投递、HMAC 签名 Webhook —— 每次投递尝试都写入 `delivery_logs`。产出落库，任务以 `done` 或 `blocked` 结束。
+
+**Step 10 — Verify — and let anyone verify / 验证 —— 任何人都能验证** · Screen 页面: `/verify/<sip_id>`
+- **You do 你做什么：** Open the receipt link. Copy it and send it to a friend — it works without logging in. 打开回执链接，把它发给朋友 —— 不用登录也能打开。
+- **Behind the scenes 幕后：** The public verification page shows the SIP ID, payload hash, Ed25519 signature and public key, the BscScan transaction link, chain ID and block number, and ERC-8004 identity/feedback transactions — with personal data redacted. This is the page no unverified agent platform can show. 公开验证页展示 SIP 编号、内容哈希、Ed25519 签名与公钥、BscScan 交易链接、链 ID 与区块高度、以及 ERC-8004 身份/反馈交易 —— 个人隐私信息已脱敏。这是任何不可验证的智能体平台都拿不出来的一页。
+
+### 17.3 Lane view — who does what / 泳道视图 —— 各自动作一览
+
+| Step 步骤 | You (human) 你（人） | Twin 孪生 | Platform (deterministic) 平台（确定性代码） | Chain 区块链 |
+|---|---|---|---|---|
+| 1–2 注册孵化 | Sign up, name your twin 注册、起名 | — | Creates account + twin record 建账号与孪生记录 | ERC-8004 identity 注册身份 |
+| 3–5 组队装技能 | Create specialist, install and assign skill 建专家、装技能、指派 | — | Derives capability contract 推导能力契约 | Specialist identity 专家身份 |
+| 6 连接工具 | Connect + test adapter 连接并测试 | — | Stores credentials, tests 存凭证、测试 | — |
+| 7 委派 | Type intent, answer slot questions 输入意图、补充信息 | Drafts plan 起草计划 | Budget preflight, SIP 6 rules 预算预检、SIP 六规则 | — |
+| 8 决策 | Approve / reject + reason 批准/拒绝 + 理由 | Waits 等待 | Signs receipt (Ed25519) 签回执 | Anchor hash + feedback 锚定 + 反馈 |
+| 9 执行 | Watch events 看事件流 | Executes via adapter 通过工具执行 | delivery_logs, outcome 投递日志、产出 | — |
+| 10 验证 | Share the link 分享链接 | — | Public verify API 公开验证接口 | BscScan proof 链上证明 |
+
+### 17.4 Troubleshooting / 常见问题排查
+
+| Symptom 现象 | Cause 原因 | Fix 解决 |
+|---|---|---|
+| Task ends as "blocked / no_live_adapter" 任务以「blocked / no_live_adapter」结束 | No live adapter connected for that action 该动作没有实时连接 | Step 6: connect the adapter, test it, delegate again 回到第 6 步：连接、测试、重新委派 |
+| Receipt shows anchor status "simulated" 回执锚定状态为「simulated」 | Chain keys not configured 链上密钥未配置 | Honest label, not an error; configure BSC Testnet keys for real transactions — a retry queue runs every 15 min 这是诚实标注而非错误；配置 BSC 测试链密钥后即为真实交易；重试队列每 15 分钟运行一次 |
+| Chat refuses with a budget message 对话因预算提示被拒绝 | Monthly token cap reached or workspace paused 达到月度上限或工作区被暂停 | Dashboard → Run Safety card: adjust budget or resume 仪表盘 → 运行安全卡片：调整预算或恢复 |
+| Specialist missing in the assign dropdown 指派下拉里找不到专家 | Specialist not created yet 专家尚未创建 | Step 3: create it at `/dashboard/specialists` 第 3 步：去 `/dashboard/specialists` 创建 |
+| Twin "lectures" instead of acting 孪生只说不动 | The action is consequential — it is *supposed* to stop for approval 动作有后果 —— 它本来就应该停下来等你批准 | Open the Decision Card and decide 打开决策卡做决定 |
+
+**Knowledge check / 知识检查**
+1. Your task says "draft — not executed". What is missing? → A live adapter (Step 6). AiXin refuses to fake success. / 任务显示「草稿 —— 未执行」，缺什么？→ 实时外部工具连接（第 6 步）。AiXin 拒绝假装成功。
+2. Who validates an intent — the AI model or deterministic rules? → Six deterministic rules; the model only proposes. / 谁校验意图 —— AI 模型还是确定性规则？→ 六条确定性规则；模型只负责提议。
+3. A stranger wants proof your twin did something. What do you send? → The `/verify/<sip_id>` link — no login needed. / 陌生人要证明你的孪生做了某件事，你发什么？→ `/verify/<sip_id>` 链接 —— 无需登录。
