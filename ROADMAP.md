@@ -1,6 +1,6 @@
 # AiXin Roadmap
 
-> Last updated: 2026-08-08
+> Last updated: 2026-08-28
 > Current phase: **Track A ✅ · Track B 🟡 real persistence + live anchor shipped · pre-IDO blockers (ZH i18n + mobile-first) ✅ cleared · Testnet Go-Live (Phase 3.5) 🔴 in progress · Core protocol / Trust Graph (Phase 4) 🔜 · Post-launch (Phases 5–6) 🔜**
 
 >
@@ -276,3 +276,61 @@ Ordered by dependency — do 1–6 before recording anything:
 9. Refresh investor deck + run-of-show.
 
 - Phase 4: Track 4 (Build & monetise) published in the Academy — capability matrix, twin templates, OPC ROI/monetisation, /learn/capabilities, /learn/templates, /learn/roi.
+
+---
+
+## Aug–Dec 2026 delivery track — gates, budget, skills
+
+> Added 2026-08-28. Full detail: [`AIXIN_PLAN_2026H2.md`](./AIXIN_PLAN_2026H2.md) ·
+> [`AIXIN_MARKETING_PLAN.md`](./AIXIN_MARKETING_PLAN.md) ·
+> workbook `AiXin_Budget_Roadmap_Aug_Dec_2026.xlsx`.
+> Cost basis: lean / Lovable-built. Target: $AXN IDO before end of Dec 2026.
+
+| Gate | Month | Theme | Exit criteria |
+| --- | --- | --- | --- |
+| G1 | Sep 2026 | Testnet complete | Phase 3.5.d done; W1/W2/W4/W6 hardened; BangBang trial live in sandbox; first 8 skills live |
+| G2 | Oct 2026 | Protocol + audit | Trust Graph indexer + read API + explorer live; AIP-3/4/5 published; contract audit engaged; **IDO go/no-go** |
+| G3 | Nov 2026 | Commerce + skills | W5 marketplace commerce live; metered billing; 12 skills + 6 Specialist bundles shipped; audit remediation |
+| G4 | Dec 2026 | IDO / TGE | Clean audit; $AXN deployed; ledger-preview → real ledger; listing + market making; mainnet bundle |
+| G5 | Dec 2026 | Post-launch ops | Runrate infra, support rota, community governance, monthly transparency report |
+
+### Budget summary (USD, must-fund)
+
+| Block | Low | High | Mid |
+| --- | --- | --- | --- |
+| Build (241 effort days) | 19,100 | 29,100 | 24,100 |
+| Security / audit | 18,600 | 56,200 | 37,400 |
+| Token launch (incl. 50–150k recoverable float) | 83,000 | 263,000 | 173,000 |
+| Marketing | 27,900 | 79,700 | 53,800 |
+| Ops | 14,000 | 29,000 | 21,500 |
+| Infra | 5,150 | 11,600 | 8,375 |
+| Contingency (10%) | 15,355 | 42,520 | 28,938 |
+| **Must-fund total** | **168,905** | **467,720** | **318,313** |
+
+Recommended raise ≈ **US$514k** (high case + one month buffer). Cumulative spend before the
+Gate 2 IDO decision is under **US$75k**, so go/no-go is a real option.
+
+### Priority skills (12) — none ships without a live adapter
+
+- [ ] Daily Briefing — harden + WeChat delivery (Sep, 🟢 live today)
+- [ ] Customer Reply Desk (Sep)
+- [ ] Invoice & Reconciliation Watcher (Oct)
+- [ ] Lead Qualifier + follow-up drafts (Oct)
+- [ ] Homework Photo Recognition (Sep, BangBang)
+- [ ] Math Practice Generator (Sep, BangBang)
+- [ ] AI Tutoring Session (Sep, BangBang)
+- [ ] Parent / Teacher Progress Report (Sep, BangBang)
+- [ ] Financial Predictor — harden (Oct, 🟢 live today)
+- [ ] Portfolio Briefing (Oct)
+- [ ] On-chain Monitor & Alert (Nov)
+- [ ] Treasury / DAO Report (Nov)
+
+### Specialist Twin bundles (6, all by Nov 2026)
+
+- [ ] Operations · [ ] Customer Desk · [ ] Finance · [ ] Tutor · [ ] Growth · [ ] Analyst
+
+### Optional / explicitly deferred
+
+- [ ] W3 `dsh-bridge` self-hosted DeepSeek Harness runtime — not on the IDO critical path
+- [ ] W6 deterministic replay — 🔵 planned only; never demo as working
+- [ ] Bug bounty, events, paid acquisition — accelerators, cut first if funding is tight
