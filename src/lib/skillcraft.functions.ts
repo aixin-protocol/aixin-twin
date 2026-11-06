@@ -63,7 +63,7 @@ function heuristicDraft(input: z.infer<typeof SuggestInput>): SuggestDraft {
 
 export const suggestSkillDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => SuggestInput.parse(d))
+  .validator((d: unknown) => SuggestInput.parse(d))
   .handler(async ({ data }): Promise<SuggestDraft> => {
     const resolved = resolveChatModel("fast");
     if (!resolved) {

@@ -51,7 +51,7 @@ export const unlinkTelegram = createServerFn({ method: "POST" })
 
 export const registerTelegramWebhook = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ url: z.string().url() }).parse(data))
+  .validator((data) => z.object({ url: z.string().url() }).parse(data))
   .handler(async ({ data }) => {
     const { setTelegramWebhook, getTelegramWebhookInfo } = await import("@/lib/telegram.server");
     const res = await setTelegramWebhook(data.url);

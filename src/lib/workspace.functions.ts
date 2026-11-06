@@ -67,7 +67,7 @@ export const getWorkspace = createServerFn({ method: "GET" })
 // -------- Create Specialist --------
 export const createSpecialist = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         name: z.string().min(1).max(60),
@@ -98,7 +98,7 @@ export const createSpecialist = createServerFn({ method: "POST" })
 // -------- Update specialist status (retire / reactivate / pause) --------
 export const setSpecialistStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         specialistId: z.string().uuid(),
@@ -120,7 +120,7 @@ export const setSpecialistStatus = createServerFn({ method: "POST" })
 // -------- Delete specialist --------
 export const deleteSpecialist = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ specialistId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ specialistId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await supabase.from("skill_assignments").delete().eq("specialist_id", data.specialistId).eq("user_id", userId);
@@ -136,7 +136,7 @@ export const deleteSpecialist = createServerFn({ method: "POST" })
 // -------- Install Skill --------
 export const installSkill = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ skillId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ skillId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase
@@ -149,7 +149,7 @@ export const installSkill = createServerFn({ method: "POST" })
 // -------- Create Skill (SkillCraft publish) --------
 export const createSkill = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         name: z.string().min(1).max(80),
@@ -229,7 +229,7 @@ export const createSkill = createServerFn({ method: "POST" })
 // -------- Update Skill (author edits; bumps version if status=live) --------
 export const updateSkill = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         skillId: z.string().uuid(),
@@ -309,7 +309,7 @@ export const updateSkill = createServerFn({ method: "POST" })
 // -------- Skill detail (public catalog page) --------
 export const getSkillDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ skillId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ skillId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: skill, error } = await supabase
@@ -391,7 +391,7 @@ export const getSkillDetail = createServerFn({ method: "POST" })
 // -------- Upgrade an install to the latest version --------
 export const upgradeInstall = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ skillId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ skillId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: sk } = await supabase
@@ -412,7 +412,7 @@ export const upgradeInstall = createServerFn({ method: "POST" })
 // -------- Read installer count for a skill (author only) --------
 export const getSkillInstallerCount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ skillId: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ skillId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: sk } = await supabase
@@ -432,7 +432,7 @@ export const getSkillInstallerCount = createServerFn({ method: "POST" })
 // -------- Assign Skill to Specialist --------
 export const assignSkill = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ skillId: z.string().uuid(), specialistId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -449,7 +449,7 @@ export const assignSkill = createServerFn({ method: "POST" })
 // -------- Unassign Skill from Specialist --------
 export const unassignSkill = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ skillId: z.string().uuid(), specialistId: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -467,7 +467,7 @@ export const unassignSkill = createServerFn({ method: "POST" })
 // -------- Update specialist (name/role/type/status) --------
 export const updateSpecialist = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         specialistId: z.string().uuid(),
@@ -638,7 +638,7 @@ export const seedDemoWorkspace = createServerFn({ method: "POST" })
 // -------- Delegate task to a specialist (creates SIP report + task; card if approval needed) --------
 export const delegateTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         specialistId: z.string().uuid(),

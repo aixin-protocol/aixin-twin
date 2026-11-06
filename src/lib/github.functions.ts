@@ -5,7 +5,7 @@ import { commitFilesToGitHub, createGithubClient, fetchRepoFile, isMissingGithub
 
 export const getRepoFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => getRepoFileSchema.parse(d))
+  .validator((d: unknown) => getRepoFileSchema.parse(d))
   .handler(async ({ data }) => {
     const lovableKey = process.env.LOVABLE_API_KEY;
     const githubKey = process.env.GITHUB_API_KEY;
@@ -19,7 +19,7 @@ export const getRepoFile = createServerFn({ method: "POST" })
 
 export const previewCommit = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => previewCommitSchema.parse(d))
+  .validator((d: unknown) => previewCommitSchema.parse(d))
   .handler(async ({ data }) => {
     const lovableKey = process.env.LOVABLE_API_KEY;
     const githubKey = process.env.GITHUB_API_KEY;
@@ -57,7 +57,7 @@ export const previewCommit = createServerFn({ method: "POST" })
 
 export const commitToGitHub = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => commitToGitHubSchema.parse(d))
+  .validator((d: unknown) => commitToGitHubSchema.parse(d))
   .handler(async ({ data }) => {
     const lovableKey = process.env.LOVABLE_API_KEY;
     const githubKey = process.env.GITHUB_API_KEY;

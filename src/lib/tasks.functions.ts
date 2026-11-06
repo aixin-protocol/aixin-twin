@@ -21,7 +21,7 @@ const EventInput = z.object({
 // ---- Start an intent: creates a real task + decision card + seeds trace ----
 export const startIntent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         specialistId: z.string().uuid(),
@@ -182,7 +182,7 @@ export const startIntent = createServerFn({ method: "POST" })
 // ---- Append a single trace event (client-driven cadence) ----
 export const logTaskEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => EventInput.parse(data))
+  .validator((data) => EventInput.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     // Verify caller owns the task.
@@ -216,7 +216,7 @@ export const logTaskEvent = createServerFn({ method: "POST" })
 // ---- Read one task + its events + latest receipt ----
 export const getTaskDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ taskId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ taskId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const [taskRes, eventsRes, cardRes, receiptRes] = await Promise.all([
@@ -250,7 +250,7 @@ export const listTasks = createServerFn({ method: "GET" })
 // ---- Delete a single task (cascades events/messages/outcomes/decision_cards) ----
 export const deleteTask = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ taskId: z.string().uuid() }).parse(data))
+  .validator((data) => z.object({ taskId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     // receipts.task_id is SET NULL on task delete — clean them (and linked

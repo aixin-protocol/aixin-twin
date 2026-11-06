@@ -9,7 +9,7 @@ const asJson = (v: unknown) => v as unknown as Json;
 // --- Validate an intent and create a pending decision card ---
 export const runSipValidate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         specialistId: z.string().uuid(),
@@ -97,7 +97,7 @@ export const runSipValidate = createServerFn({ method: "POST" })
 // --- Approve or reject a decision card. On approve, anchor on BSC Testnet. ---
 export const decideOnCard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) =>
+  .validator((data) =>
     z
       .object({
         cardId: z.string().uuid(),

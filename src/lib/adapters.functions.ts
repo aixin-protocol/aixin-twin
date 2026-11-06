@@ -17,7 +17,7 @@ export const listAdapters = createServerFn({ method: "GET" })
 
 export const upsertAdapter = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         provider: z.string().min(1).max(60),
@@ -69,7 +69,7 @@ export const upsertAdapter = createServerFn({ method: "POST" })
 
 export const setAdapterMode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ id: z.string().uuid(), mode: z.enum(["test", "live"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -85,7 +85,7 @@ export const setAdapterMode = createServerFn({ method: "POST" })
 
 export const disconnectAdapter = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase
@@ -101,7 +101,7 @@ export const disconnectAdapter = createServerFn({ method: "POST" })
 // credentials can be verified before a Specialist relies on them.
 export const sendTestEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ to: z.string().email().optional() }).parse(d ?? {}))
+  .validator((d: unknown) => z.object({ to: z.string().email().optional() }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: adapter } = await supabase

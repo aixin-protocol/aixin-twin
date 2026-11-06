@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getTaskThread = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ taskId: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ taskId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const [msgs, outcome] = await Promise.all([
@@ -28,7 +28,7 @@ export const getTaskThread = createServerFn({ method: "GET" })
 
 export const postTaskMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
+  .validator((d) =>
     z.object({ taskId: z.string().uuid(), body: z.string().min(1).max(4000) }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -98,7 +98,7 @@ export const getUnreadCount = createServerFn({ method: "GET" })
 
 export const markThreadRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ taskId: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ taskId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await supabase

@@ -9,7 +9,7 @@ const HatchSchema = z.object({
 
 export const hatchMasterTwin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => HatchSchema.parse(d))
+  .validator((d: unknown) => HatchSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const initials = data.name.trim().charAt(0).toUpperCase() || "M";
